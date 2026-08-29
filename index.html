@@ -485,9 +485,15 @@
         });
 
         // Set() จะตัดตัวซ้ำออกให้เหลือ 1 เดียว และ sort() จะเรียงจากน้อยไปมาก
-        const uniqueOrders = [...new Set(validForOrder.map(i => i.order_no).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'th', {numeric: true}));
-        const uniquePOs = [...new Set(validForPo.map(i => i.po_no).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'th', {numeric: true}));
-        const uniqueWorks = [...new Set(validForWork.map(i => workItemsMap[i.id_work] || i.id_work).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'th', {numeric: true}));
+        // Set() จะตัดตัวซ้ำออกให้เหลือ 1 เดียว และ sort() จะเรียงจากน้อยไปมาก
+        const uniqueOrders = [...new Set(validForOrder.map(i => i.order_no ? String(i.order_no).trim() : null).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
+        
+        const uniquePOs = [...new Set(validForPo.map(i => i.po_no ? String(i.po_no).trim() : null).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
+        
+        const uniqueWorks = [...new Set(validForWork.map(i => {
+            let w = workItemsMap[i.id_work] || i.id_work;
+            return w ? String(w).trim() : null;
+        }).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
 
         const currOrder = orderSelect.value;
         const currPo = poSelect.value;
