@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JAGUAR PRODUCTION STATUS REPORT // LIVE STOCK VIEW</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #030806;
+            --panel-bg: rgba(7, 24, 16, 0.95);
+            --border-neon: #00ff88;
+            --border-dim: #17633c;
+            --text-main: #f0fdf7;
+            --text-label: #a7e0c4;
+            --text-muted: #8ca89a;
+            --neon-green: #00ff88;
+            --neon-glow: rgba(0, 255, 136, 0.3);
+            --input-bg: #112a1e;
+            --input-text: #ffffff;
+            --table-bg: #071910;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(3, 8, 6, 0.95), rgba(5, 20, 12, 0.9)),
+                        url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80') no-repeat center center;
+            background-size: cover;
+            z-index: -1;
+            filter: brightness(0.3) contrast(1.2) hue-rotate(60deg);
+        }
+
+        .dashboard-container {
+            width: 100%;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-neon);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 0 25px var(--neon-glow);
+            box-sizing: border-box;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-dim);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #113a24 0%, #030806 100%);
+            border: 2px solid var(--neon-green);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-glow);
+        }
+
+        .title-text h1 {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--neon-green);
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .title-text span {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .refresh-status {
+            font-size: 0.75rem;
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--neon-green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+
+        .excel-btn {
+            background: linear-gradient(135deg, #0f5132, #0a3622);
+            border: 1px solid #198754;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .excel-btn:hover {
+            background: #198754;
+            box-shadow: 0 0 12px rgba(25, 135, 84, 0.5);
+        }
+
+        .filter-panel {
+            background: var(--table-bg);
+            border: 1px solid var(--border-dim);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-label);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .form-select-stock {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-dim);
+            color: var(--input-text);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            padding: 6px 10px;
+            width: 100%;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .form-select-stock:focus {
+            background-color: var(--bg-dark);
+            color: #fff;
+            border-color: var(--neon-green);
+            box-shadow: 0 0 8px var(--neon-glow);
+            outline: none;
+        }
+
+        .clear-btn {
+            background: #212529;
+            border: 1px solid #495057;
+            color: #ced4da;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: #343a40;
+            color: #fff;
+        }
+
+        .status-legend {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+
+        /* ตั้งค่าตารางและ Sticky Columns */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: auto;
+            background: var(--table-bg);
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            max-height: 70vh;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+
+        th, td {
+            padding: 9px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-dim);
+            border-right: 1px solid rgba(23, 99, 60, 0.3);
+        }
+
+        /* ตรึงหัวตารางด้านบน (Top) */
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #05140c;
+            color: var(--neon-green);
+            font-weight: bold;
+            text-transform: uppercase;
+            z-index: 10;
+        }
+
+        /* ตรึงคอลัมน์ 1-5 ด้านซ้าย (Left) พร้อมกำหนดความกว้าง */
+        th:nth-child(1), td:nth-child(1) { position: sticky; left: 0px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(2), td:nth-child(2) { position: sticky; left: 120px; min-width: 160px; max-width: 160px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(3), td:nth-child(3) { position: sticky; left: 280px; min-width: 130px; max-width: 130px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(4), td:nth-child(4) { position: sticky; left: 410px; min-width: 110px; max-width: 110px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(5), td:nth-child(5) { position: sticky; left: 520px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; border-right: 2px solid var(--neon-green); }
+
+        /* หัวตารางที่ถูกตรึงทั้งบนและซ้าย (Intersect) ต้องมี z-index สูงสุด */
+        thead th:nth-child(1),
+        thead th:nth-child(2),
+        thead th:nth-child(3),
+        thead th:nth-child(4),
+        thead th:nth-child(5) {
+            z-index: 12;
+            background-color: #05140c;
+        }
+
+        /* Hover Effect สลับสี */
+        tr:hover td {
+            background-color: rgba(0, 255, 136, 0.05);
+        }
+        
+        /* Hover Effect พิเศษสำหรับคอลัมน์ที่ถูกตรึง (เพราะมีพื้นหลังทับอยู่) */
+        tr:hover td:nth-child(1),
+        tr:hover td:nth-child(2),
+        tr:hover td:nth-child(3),
+        tr:hover td:nth-child(4),
+        tr:hover td:nth-child(5) {
+            background-color: #0b2e1c;
+        }
+
+        .bg-status-green { background-color: #0b3b22 !important; color: #00ff88 !important; font-weight: bold; }
+        .bg-status-yellow { background-color: #4a3f11 !important; color: #f5a623 !important; font-weight: bold; }
+        .bg-status-orange { background-color: #4a2911 !important; color: #e07a3a !important; font-weight: bold; }
+        .bg-status-red { background-color: #3b0b14 !important; color: #ff3366 !important; font-weight: bold; }
+
+        .text-center-col { text-align: center; }
+        .text-right-col { text-align: right; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header-section">
+        <div class="brand-title">
+            <div class="brand-icon">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div class="title-text">
+                <h1>JAGUAR PRODUCTION STATUS REPORT</h1>
+                <span>A4 LANDSCAPE OPTIMIZED | AUTO-SYNC: 30s | STICKY COLUMNS</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="refresh-status" id="syncStatus">
+                <div class="pulse-dot"></div> LIVE SYNC ACTIVE
+            </div>
+            <button class="excel-btn" onclick="exportToExcel()">
+                <i class="fa-solid fa-file-excel"></i> ดาวน์โหลดไฟล์ EXCEL
+            </button>
+        </div>
+    </div>
+
+    <div class="filter-panel">
+        <div class="filter-group">
+            <label for="filter_order">เลขที่ใบสั่ง:</label>
+            <select id="filter_order" class="form-select-stock" onchange="applyFilters()">
+                <option value="">-- ทุกเลขที่ใบสั่ง --</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="filter_po">PO_No:</label>
+            <select id="filter_po" class="form-select-stock" onchange="applyFilters()">
+                <option value="">-- ทุก PO_No --</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="filter_work">รหัสสินค้า:</label>
+            <select id="filter_work" class="form-select-stock" onchange="applyFilters()">
+                <option value="">-- ทุกรหัสสินค้า --</option>
+            </select>
+        </div>
+        <div>
+            <button class="clear-btn" onclick="clearFilters()">ล้างตัวกรอง</button>
+        </div>
+        
+        <div class="status-legend">
+            <div class="legend-item"><div class="legend-box" style="background:#0b3b22; border:1px solid #00ff88;"></div> 100%+</div>
+            <div class="legend-item"><div class="legend-box" style="background:#4a3f11; border:1px solid #f5a623;"></div> 75-99%</div>
+            <div class="legend-item"><div class="legend-box" style="background:#4a2911; border:1px solid #e07a3a;"></div> 30-74%</div>
+            <div class="legend-item"><div class="legend-box" style="background:#3b0b14; border:1px solid #ff3366;"></div> 1-29%</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="statusReportTable">
+            <thead id="reportTableHead">
+                <tr><th>กำลังโหลดโครงสร้างตาราง...</th></tr>
+            </thead>
+            <tbody id="reportTableBody">
+                <tr><td class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i> กำลังประมวลผลข้อมูลจากระบบฐานข้อมูล...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://siiiifesdjuunwmwozfb.supabase.co/rest/v1";
+    const SUPABASE_KEY = "sb_publishable_ohToE8Z_Fzo87uBtzdPDIg_cqHCi3HT";
+    
+    const headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json"
+    };
+
+    // Mapping สำหรับแปลงชื่อขั้นตอนเต็ม เป็นตัวย่อ
+    const STEP_ABBR_MAP = {
+        "ตัดเหรียญมือ": "ตร.มือ",
+        "ตัดเหรียญออโต": "ตร.ออโต",
+        "ตัดมุม": "ตัดมุม",
+        "รีดใบ": "รีดใบ",
+        "ตัดใบ": "ตัดใบ",
+        "ตร.มือ": "ตร.มือ",
+        "ตร.ออโต": "ตร.ออโต"
+    };
+
+    function getStepAbbr(name) {
+        if(!name) return "";
+        return STEP_ABBR_MAP[name.trim()] || name; 
+    }
+
+    let allOrdersData = [];
+    let workItemsMap = {};
+    let allProductionSteps = []; 
+    let targetToStepMap = {}; 
+    let aggregatedProduction = {}; 
+    let isFirstLoad = true;
+
+    window.onload = async function() {
+        await fetchAllData();
+        setInterval(fetchAllData, 30000); 
+    };
+
+    async function fetchAllData() {
+        try {
+            document.getElementById('syncStatus').innerHTML = '<div class="pulse-dot" style="background:#f5a623;"></div> SYNCING...';
+
+            const [ordersRes, workItemsRes, stepsRes, targetsRes, dailyRes] = await Promise.all([
+                fetch(`${SUPABASE_URL}/orders?select=*&order=order_no.asc`, { headers }),
+                fetch(`${SUPABASE_URL}/work_items?select=id_work,work_code`, { headers }),
+                fetch(`${SUPABASE_URL}/production_steps?select=id_step,step_name&order=id_step.asc`, { headers }),
+                fetch(`${SUPABASE_URL}/targets?select=id_target,id_step`, { headers }),
+                fetch(`${SUPABASE_URL}/daily_production?select=id_order,id_target,produced_amount`, { headers })
+            ]);
+
+            if (!ordersRes.ok || !dailyRes.ok) throw new Error("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล");
+
+            allOrdersData = await ordersRes.json();
+            const workItems = await workItemsRes.json();
+            allProductionSteps = await stepsRes.json(); 
+            const targets = await targetsRes.json();
+            const dailyProduction = await dailyRes.json();
+
+            workItems.forEach(w => workItemsMap[w.id_work] = w.work_code);
+            targets.forEach(t => targetToStepMap[t.id_target] = t.id_step);
+
+            aggregatedProduction = {};
+            dailyProduction.forEach(dp => {
+                let orderId = dp.id_order;
+                let stepId = targetToStepMap[dp.id_target];
+
+                if (orderId && stepId && dp.produced_amount) {
+                    if (!aggregatedProduction[orderId]) aggregatedProduction[orderId] = {};
+                    if (!aggregatedProduction[orderId][stepId]) aggregatedProduction[orderId][stepId] = 0;
+                    aggregatedProduction[orderId][stepId] += dp.produced_amount;
+                }
+            });
+
+            if(isFirstLoad) {
+                renderTableHeader();
+                isFirstLoad = false;
+            }
+            
+            applyFilters();
+            
+            setTimeout(() => {
+                document.getElementById('syncStatus').innerHTML = '<div class="pulse-dot"></div> LIVE SYNC ACTIVE';
+            }, 1000);
+
+        } catch (error) {
+            console.error("Fetch Data Error:", error);
+            document.getElementById('syncStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-danger"></i> SYNC FAILED';
+        }
+    }
+
+    // ฟังก์ชันสร้างตัวเลือก Dropdown พร้อมเรียงลำดับจากน้อยไปมากแบบรองรับตัวเลข (localeCompare)
+    function populateDropdowns(orderFilter = '', poFilter = '', workFilter = '') {
+        const orderSelect = document.getElementById('filter_order');
+        const poSelect = document.getElementById('filter_po');
+        const workSelect = document.getElementById('filter_work');
+
+        const validForOrder = allOrdersData.filter(item => {
+            let workCode = workItemsMap[item.id_work] || String(item.id_work || '');
+            return (!poFilter || item.po_no === poFilter) && (!workFilter || workCode === workFilter);
+        });
+
+        const validForPo = allOrdersData.filter(item => {
+            let workCode = workItemsMap[item.id_work] || String(item.id_work || '');
+            return (!orderFilter || item.order_no === orderFilter) && (!workFilter || workCode === workFilter);
+        });
+
+        const validForWork = allOrdersData.filter(item => {
+            return (!orderFilter || item.order_no === orderFilter) && (!poFilter || item.po_no === poFilter);
+        });
+
+        // Set() จะตัดตัวซ้ำออกให้เหลือ 1 เดียว และ sort() จะเรียงจากน้อยไปมาก
+        const uniqueOrders = [...new Set(validForOrder.map(i => i.order_no).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'th', {numeric: true}));
+        const uniquePOs = [...new Set(validForPo.map(i => i.po_no).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'th', {numeric: true}));
+        const uniqueWorks = [...new Set(validForWork.map(i => workItemsMap[i.id_work] || i.id_work).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'th', {numeric: true}));
+
+        const currOrder = orderSelect.value;
+        const currPo = poSelect.value;
+        const currWork = workSelect.value;
+
+        orderSelect.innerHTML = '<option value="">-- ทุกเลขที่ใบสั่ง --</option>';
+        uniqueOrders.forEach(o => {
+            let selected = (o === currOrder) ? 'selected' : '';
+            orderSelect.innerHTML += `<option value="${o}" ${selected}>${o}</option>`;
+        });
+
+        poSelect.innerHTML = '<option value="">-- ทุก PO_No --</option>';
+        uniquePOs.forEach(po => {
+            let selected = (po === currPo) ? 'selected' : '';
+            poSelect.innerHTML += `<option value="${po}" ${selected}>${po}</option>`;
+        });
+
+        workSelect.innerHTML = '<option value="">-- ทุกรหัสสินค้า --</option>';
+        uniqueWorks.forEach(w => {
+            let selected = (w === currWork) ? 'selected' : '';
+            workSelect.innerHTML += `<option value="${w}" ${selected}>${w}</option>`;
+        });
+    }
+
+    function applyFilters() {
+        const orderVal = document.getElementById('filter_order').value;
+        const poVal = document.getElementById('filter_po').value;
+        const workVal = document.getElementById('filter_work').value;
+
+        populateDropdowns(orderVal, poVal, workVal);
+
+        let filtered = allOrdersData.filter(item => {
+            let workCode = workItemsMap[item.id_work] || String(item.id_work || '');
+            let matchOrder = !orderVal || item.order_no === orderVal;
+            let matchPo = !poVal || item.po_no === poVal;
+            let matchWork = !workVal || workCode === workVal;
+            return matchOrder && matchPo && matchWork;
+        });
+
+        renderTable(filtered);
+    }
+
+    function clearFilters() {
+        document.getElementById('filter_order').value = '';
+        document.getElementById('filter_po').value = '';
+        document.getElementById('filter_work').value = '';
+        applyFilters();
+    }
+
+    function getPercentageClass(val) {
+        if (val === null || val === undefined || val === '' || val === '-') return '';
+        let num = parseFloat(val);
+        if (isNaN(num)) return '';
+        if (num >= 100) return 'bg-status-green';
+        if (num >= 75) return 'bg-status-yellow';
+        if (num >= 30) return 'bg-status-orange';
+        return 'bg-status-red';
+    }
+
+    function formatNumber(num) {
+        if (num === 0) return '0';
+        if (!num || isNaN(num)) return '-';
+        return parseInt(num).toLocaleString();
+    }
+
+    function calculatePercentage(produced, orderQty) {
+        if (!produced || produced === 0) return '-';
+        if (!orderQty || orderQty === 0) return '-';
+        let pct = (produced / orderQty) * 100;
+        return pct.toFixed(1);
+    }
+
+    function renderTableHeader() {
+        const thead = document.getElementById('reportTableHead');
+        let html = `
+            <tr>
+                <th>เลขที่ใบสั่ง</th>
+                <th>รหัสสินค้า</th>
+                <th>PO_NO</th>
+                <th class="text-right-col">ยอดสั่งผลิต</th>
+                <th>วันกำหนดเสร็จ</th>
+        `;
+
+        allProductionSteps.forEach(step => {
+            let abbrName = getStepAbbr(step.step_name);
+            html += `
+                <th class="text-center-col">%${abbrName}</th>
+                <th class="text-right-col">ยอด${abbrName}</th>
+            `;
+        });
+
+        html += `</tr>`;
+        thead.innerHTML = html;
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('reportTableBody');
+        tbody.innerHTML = '';
+
+        const totalColumns = 5 + (allProductionSteps.length * 2);
+
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${totalColumns}" class="text-center text-muted py-3" style="position:static;">ไม่พบข้อมูลใบสั่งที่ตรงกับเงื่อนไข</td></tr>`;
+            return;
+        }
+
+        data.forEach(order => {
+            let workCode = workItemsMap[order.id_work] || order.id_work || '-';
+            let orderQty = order.quantity || 0;
+            let prodBySteps = aggregatedProduction[order.id_order] || {};
+
+            let tr = document.createElement('tr');
+            let rowHtml = `
+                <td class="fw-bold text-success">${order.order_no || '-'}</td>
+                <td class="text-info">${workCode}</td>
+                <td>${order.po_no || '-'}</td>
+                <td class="text-right-col fw-bold">${formatNumber(orderQty)}</td>
+                <td>${order.end_date || '-'}</td>
+            `;
+
+            allProductionSteps.forEach(step => {
+                let qty = prodBySteps[step.id_step] || 0;
+                let pct = calculatePercentage(qty, orderQty);
+                
+                rowHtml += `<td class="text-center-col ${getPercentageClass(pct)}">${pct !== '-' ? pct + '%' : '-'}</td>`;
+                rowHtml += `<td class="text-right-col">${formatNumber(qty)}</td>`;
+            });
+
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function exportToExcel() {
+        let table = document.getElementById('statusReportTable');
+        let wb = XLSX.utils.table_to_book(table, { sheet: "Status Report" });
+        XLSX.writeFile(wb, "Jaguar_Production_Status_Report.xlsx");
+    }
+</script>
+
+</body>
+</html>
