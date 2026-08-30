@@ -128,6 +128,28 @@
             100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
         }
 
+        .home-btn {
+            background: transparent;
+            border: 1px solid #f5a623;
+            color: #f5a623;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .home-btn:hover {
+            background: #f5a623;
+            color: var(--bg-dark);
+            box-shadow: 0 0 12px rgba(245, 166, 35, 0.5);
+        }
+
         .excel-btn {
             background: linear-gradient(135deg, #0f5132, #0a3622);
             border: 1px solid #198754;
@@ -325,6 +347,10 @@
             <div class="refresh-status" id="syncStatus">
                 <div class="pulse-dot"></div> LIVE SYNC ACTIVE
             </div>
+            <!-- ปุ่ม Home ที่เพิ่มใหม่ -->
+            <a href="https://paiboon-creater.github.io/Data_Information_Jaguar_productions/" class="home-btn">
+                <i class="fa-solid fa-house"></i> Home App
+            </a>
             <button class="excel-btn" onclick="exportToExcel()">
                 <i class="fa-solid fa-file-excel"></i> ดาวน์โหลดไฟล์ EXCEL
             </button>
