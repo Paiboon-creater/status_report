@@ -496,30 +496,31 @@
         const poSelect = document.getElementById('filter_po');
         const workSelect = document.getElementById('filter_work');
 
+        // ฟังก์ชันช่วยจัดการตัดช่องว่าง (ป้องการ error กรณีค่าเป็น null)
+        const safeTrim = (val) => val ? String(val).trim() : '';
+
         const validForOrder = allOrdersData.filter(item => {
-            let workCode = workItemsMap[item.id_work] || String(item.id_work || '');
-            return (!poFilter || item.po_no === poFilter) && (!workFilter || workCode === workFilter);
+            let safePoNo = safeTrim(item.po_no);
+            let safeWorkCode = safeTrim(workItemsMap[item.id_work] || item.id_work);
+            return (!poFilter || safePoNo === poFilter) && (!workFilter || safeWorkCode === workFilter);
         });
 
         const validForPo = allOrdersData.filter(item => {
-            let workCode = workItemsMap[item.id_work] || String(item.id_work || '');
-            return (!orderFilter || item.order_no === orderFilter) && (!workFilter || workCode === workFilter);
+            let safeOrderNo = safeTrim(item.order_no);
+            let safeWorkCode = safeTrim(workItemsMap[item.id_work] || item.id_work);
+            return (!orderFilter || safeOrderNo === orderFilter) && (!workFilter || safeWorkCode === workFilter);
         });
 
         const validForWork = allOrdersData.filter(item => {
-            return (!orderFilter || item.order_no === orderFilter) && (!poFilter || item.po_no === poFilter);
+            let safeOrderNo = safeTrim(item.order_no);
+            let safePoNo = safeTrim(item.po_no);
+            return (!orderFilter || safeOrderNo === orderFilter) && (!poFilter || safePoNo === poFilter);
         });
 
-        // Set() จะตัดตัวซ้ำออกให้เหลือ 1 เดียว และ sort() จะเรียงจากน้อยไปมาก
-        // Set() จะตัดตัวซ้ำออกให้เหลือ 1 เดียว และ sort() จะเรียงจากน้อยไปมาก
-        const uniqueOrders = [...new Set(validForOrder.map(i => i.order_no ? String(i.order_no).trim() : null).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
-        
-        const uniquePOs = [...new Set(validForPo.map(i => i.po_no ? String(i.po_no).trim() : null).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
-        
-        const uniqueWorks = [...new Set(validForWork.map(i => {
-            let w = workItemsMap[i.id_work] || i.id_work;
-            return w ? String(w).trim() : null;
-        }).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
+        // ดึงค่าที่ไม่ซ้ำ ตัดช่องว่าง และจัดเรียง
+        const uniqueOrders = [...new Set(validForOrder.map(i => safeTrim(i.order_no)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
+        const uniquePOs = [...new Set(validForPo.map(i => safeTrim(i.po_no)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
+        const uniqueWorks = [...new Set(validForWork.map(i => safeTrim(workItemsMap[i.id_work] || i.id_work)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
 
         const currOrder = orderSelect.value;
         const currPo = poSelect.value;
@@ -552,10 +553,16 @@
         populateDropdowns(orderVal, poVal, workVal);
 
         let filtered = allOrdersData.filter(item => {
-            let workCode = workItemsMap[item.id_work] || String(item.id_work || '');
-            let matchOrder = !orderVal || item.order_no === orderVal;
-            let matchPo = !poVal || item.po_no === poVal;
-            let matchWork = !workVal || workCode === workVal;
+            // ดึงข้อมูลดิบมาตัดช่องว่างก่อนนำไปเปรียบเทียบ
+            let safeOrderNo = item.order_no ? String(item.order_no).trim() : '';
+            let safePoNo = item.po_no ? String(item.po_no).trim() : '';
+            let rawWorkCode = workItemsMap[item.id_work] || item.id_work || '';
+            let safeWorkCode = String(rawWorkCode).trim();
+
+            let matchOrder = !orderVal || safeOrderNo === orderVal;
+            let matchPo = !poVal || safePoNo === poVal;
+            let matchWork = !workVal || safeWorkCode === workVal;
+            
             return matchOrder && matchPo && matchWork;
         });
 
