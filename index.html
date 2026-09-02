@@ -215,6 +215,45 @@
             outline: none;
         }
 
+        .smart-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--input-bg);
+            border: 1px solid var(--neon-green);
+            border-top: none;
+            z-index: 1000;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 4px 15px var(--neon-glow);
+        }
+
+        .smart-dropdown-item {
+            padding: 10px 12px;
+            color: var(--text-main);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-dim);
+            font-size: 0.85rem;
+            transition: background-color 0.2s;
+        }
+
+        .smart-dropdown-item:hover {
+            background-color: var(--table-bg);
+            color: var(--neon-green);
+        }
+
+        .smart-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .highlight-match {
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
         .clear-btn {
             background: #212529;
             border: 1px solid #495057;
@@ -253,7 +292,9 @@
             border-radius: 3px;
         }
 
-        /* ตั้งค่าตารางและ Sticky Columns */
+        /* -------------------------------------------
+           การจัดคอลัมน์แบบ Sticky 6 คอลัมน์ด้านซ้าย 
+        --------------------------------------------- */
         .table-container {
             width: 100%;
             overflow-x: auto;
@@ -279,7 +320,6 @@
             border-right: 1px solid rgba(23, 99, 60, 0.3);
         }
 
-        /* ตรึงหัวตารางด้านบน (Top) */
         thead th {
             position: sticky;
             top: 0;
@@ -290,34 +330,34 @@
             z-index: 10;
         }
 
-        /* ตรึงคอลัมน์ 1-5 ด้านซ้าย (Left) พร้อมกำหนดความกว้าง */
-        th:nth-child(1), td:nth-child(1) { position: sticky; left: 0px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(2), td:nth-child(2) { position: sticky; left: 120px; min-width: 160px; max-width: 160px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(3), td:nth-child(3) { position: sticky; left: 280px; min-width: 130px; max-width: 130px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(4), td:nth-child(4) { position: sticky; left: 410px; min-width: 110px; max-width: 110px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(5), td:nth-child(5) { position: sticky; left: 520px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; border-right: 2px solid var(--neon-green); }
+        /* ปรับเพิ่มคอลัมน์ซ่อน (กว้าง 50px) เป็นลำดับที่ 1 */
+        th:nth-child(1), td:nth-child(1) { position: sticky; left: 0px; min-width: 50px; max-width: 50px; background-color: var(--table-bg); z-index: 2; text-align: center; }
+        th:nth-child(2), td:nth-child(2) { position: sticky; left: 50px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(3), td:nth-child(3) { position: sticky; left: 170px; min-width: 160px; max-width: 160px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(4), td:nth-child(4) { position: sticky; left: 330px; min-width: 130px; max-width: 130px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(5), td:nth-child(5) { position: sticky; left: 460px; min-width: 110px; max-width: 110px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(6), td:nth-child(6) { position: sticky; left: 570px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; border-right: 2px solid var(--neon-green); }
 
-        /* หัวตารางที่ถูกตรึงทั้งบนและซ้าย (Intersect) ต้องมี z-index สูงสุด */
         thead th:nth-child(1),
         thead th:nth-child(2),
         thead th:nth-child(3),
         thead th:nth-child(4),
-        thead th:nth-child(5) {
+        thead th:nth-child(5),
+        thead th:nth-child(6) {
             z-index: 12;
             background-color: #05140c;
         }
 
-        /* Hover Effect สลับสี */
         tr:hover td {
             background-color: rgba(0, 255, 136, 0.05);
         }
         
-        /* Hover Effect พิเศษสำหรับคอลัมน์ที่ถูกตรึง (เพราะมีพื้นหลังทับอยู่) */
         tr:hover td:nth-child(1),
         tr:hover td:nth-child(2),
         tr:hover td:nth-child(3),
         tr:hover td:nth-child(4),
-        tr:hover td:nth-child(5) {
+        tr:hover td:nth-child(5),
+        tr:hover td:nth-child(6) {
             background-color: #0b2e1c;
         }
 
@@ -328,6 +368,14 @@
 
         .text-center-col { text-align: center; }
         .text-right-col { text-align: right; }
+
+        /* Style สำหรับปุ่มติ๊กซ่อนแถว */
+        .hide-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #ff3366;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -347,7 +395,6 @@
             <div class="refresh-status" id="syncStatus">
                 <div class="pulse-dot"></div> LIVE SYNC ACTIVE
             </div>
-            <!-- ปุ่ม Home ที่เพิ่มใหม่ -->
             <a href="https://paiboon-creater.github.io/Data_Information_Jaguar_productions/" class="home-btn">
                 <i class="fa-solid fa-house"></i> Home App
             </a>
@@ -359,10 +406,13 @@
 
     <div class="filter-panel">
         <div class="filter-group">
-            <label for="filter_order">เลขที่ใบสั่ง:</label>
-            <select id="filter_order" class="form-select-stock" onchange="applyFilters()">
-                <option value="">-- ทุกเลขที่ใบสั่ง --</option>
-            </select>
+            <label for="filter_order">เลขที่ใบสั่ง (ค้นหา):</label>
+            <div style="position: relative;">
+                <input type="text" id="filter_order" class="form-select-stock" 
+                       placeholder="พิมพ์เลขที่ใบสั่ง..." autocomplete="off"
+                       onkeyup="filterSmartDropdown()" onfocus="filterSmartDropdown()" onkeydown="handleOrderKeydown(event)" onchange="applyFilters()">
+                <div id="smart_dropdown_order" class="smart-dropdown-menu"></div>
+            </div>
         </div>
         <div class="filter-group">
             <label for="filter_po">PO_No:</label>
@@ -410,7 +460,6 @@
         "Content-Type": "application/json"
     };
 
-    // Mapping สำหรับแปลงชื่อขั้นตอนเต็ม เป็นตัวย่อ
     const STEP_ABBR_MAP = {
         "ตัดเหรียญมือ": "ตร.มือ",
         "ตัดเหรียญออโต": "ตร.ออโต",
@@ -432,6 +481,8 @@
     let targetToStepMap = {}; 
     let aggregatedProduction = {}; 
     let isFirstLoad = true;
+    
+    let currentValidOrders = []; 
 
     window.onload = async function() {
         await fetchAllData();
@@ -490,13 +541,10 @@
         }
     }
 
-    // ฟังก์ชันสร้างตัวเลือก Dropdown พร้อมเรียงลำดับจากน้อยไปมากแบบรองรับตัวเลข (localeCompare)
     function populateDropdowns(orderFilter = '', poFilter = '', workFilter = '') {
-        const orderSelect = document.getElementById('filter_order');
         const poSelect = document.getElementById('filter_po');
         const workSelect = document.getElementById('filter_work');
 
-        // ฟังก์ชันช่วยจัดการตัดช่องว่าง (ป้องการ error กรณีค่าเป็น null)
         const safeTrim = (val) => val ? String(val).trim() : '';
 
         const validForOrder = allOrdersData.filter(item => {
@@ -517,20 +565,13 @@
             return (!orderFilter || safeOrderNo === orderFilter) && (!poFilter || safePoNo === poFilter);
         });
 
-        // ดึงค่าที่ไม่ซ้ำ ตัดช่องว่าง และจัดเรียง
-        const uniqueOrders = [...new Set(validForOrder.map(i => safeTrim(i.order_no)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
+        currentValidOrders = [...new Set(validForOrder.map(i => safeTrim(i.order_no)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
+
         const uniquePOs = [...new Set(validForPo.map(i => safeTrim(i.po_no)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
         const uniqueWorks = [...new Set(validForWork.map(i => safeTrim(workItemsMap[i.id_work] || i.id_work)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
 
-        const currOrder = orderSelect.value;
         const currPo = poSelect.value;
         const currWork = workSelect.value;
-
-        orderSelect.innerHTML = '<option value="">-- ทุกเลขที่ใบสั่ง --</option>';
-        uniqueOrders.forEach(o => {
-            let selected = (o === currOrder) ? 'selected' : '';
-            orderSelect.innerHTML += `<option value="${o}" ${selected}>${o}</option>`;
-        });
 
         poSelect.innerHTML = '<option value="">-- ทุก PO_No --</option>';
         uniquePOs.forEach(po => {
@@ -545,24 +586,107 @@
         });
     }
 
+    function filterSmartDropdown() {
+        const input = document.getElementById('filter_order');
+        const dropdown = document.getElementById('smart_dropdown_order');
+        const filterText = input.value.toLowerCase().trim();
+
+        dropdown.innerHTML = '';
+        
+        const matchedOrders = currentValidOrders.filter(order => order.toLowerCase().includes(filterText));
+
+        if (matchedOrders.length === 0) {
+            dropdown.innerHTML = `<div class="smart-dropdown-item" style="color:var(--text-muted); cursor:default;">ไม่พบเลขที่ใบสั่งนี้</div>`;
+        } else {
+            matchedOrders.slice(0, 50).forEach(order => {
+                let displayHtml = order;
+                if (filterText !== "") {
+                    const regex = new RegExp(`(${filterText})`, "gi");
+                    displayHtml = order.replace(regex, `<span class="highlight-match">$1</span>`);
+                }
+                dropdown.innerHTML += `<div class="smart-dropdown-item" onclick="selectSmartOrder('${order}')">${displayHtml}</div>`;
+            });
+        }
+        dropdown.style.display = 'block';
+    }
+
+    // ฟังก์ชันอัพเดทค่าการซ่อนใบสั่ง (เมื่อกดติ๊ก Checkbox)
+    function toggleHideOrder(orderNo, isChecked) {
+        let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
+        if (isChecked) {
+            if (!hiddenOrders.includes(orderNo)) hiddenOrders.push(orderNo);
+        } else {
+            hiddenOrders = hiddenOrders.filter(o => o !== orderNo);
+        }
+        localStorage.setItem('hiddenOrders', JSON.stringify(hiddenOrders));
+        applyFilters(); 
+    }
+
+    function selectSmartOrder(orderNo) {
+        const input = document.getElementById('filter_order');
+        const dropdown = document.getElementById('smart_dropdown_order');
+        input.value = orderNo;
+        dropdown.style.display = 'none';
+
+        // แจ้งเตือนหากผู้ใช้พยายามค้นหาใบสั่งที่ถูกตั้งค่าซ่อนไว้
+        let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
+        if (hiddenOrders.includes(orderNo)) {
+            alert('แจ้งเตือน: แถวนี้ถูกปิดการแสดงไว้ (เนื่องจากจบใบสั่งแล้วหรือยังไม่มีข้อมูล)\nคุณสามารถติ๊กเอาเครื่องหมายถูกออกเพื่อนำกลับมาแสดงตามปกติได้ครับ');
+        }
+
+        applyFilters(); 
+    }
+
+    function handleOrderKeydown(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('smart_dropdown_order').style.display = 'none';
+            
+            let val = document.getElementById('filter_order').value.trim();
+            let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
+            
+            // แจ้งเตือนหากค้นหาใบสั่งที่ซ่อนไว้ด้วยการกด Enter
+            if (hiddenOrders.includes(val)) {
+                alert('แจ้งเตือน: แถวนี้ถูกปิดการแสดงไว้ (เนื่องจากจบใบสั่งแล้วหรือยังไม่มีข้อมูล)\nคุณสามารถติ๊กเอาเครื่องหมายถูกออกเพื่อนำกลับมาแสดงตามปกติได้ครับ');
+            }
+            applyFilters();
+        }
+    }
+
+    document.addEventListener('click', function(event) {
+        const input = document.getElementById('filter_order');
+        const dropdown = document.getElementById('smart_dropdown_order');
+        if (event.target !== input && event.target !== dropdown && !dropdown.contains(event.target)) {
+            if(dropdown) dropdown.style.display = 'none';
+        }
+    });
+
     function applyFilters() {
-        const orderVal = document.getElementById('filter_order').value;
+        const orderVal = document.getElementById('filter_order').value.trim();
         const poVal = document.getElementById('filter_po').value;
         const workVal = document.getElementById('filter_work').value;
+        
+        let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
 
         populateDropdowns(orderVal, poVal, workVal);
 
         let filtered = allOrdersData.filter(item => {
-            // ดึงข้อมูลดิบมาตัดช่องว่างก่อนนำไปเปรียบเทียบ
             let safeOrderNo = item.order_no ? String(item.order_no).trim() : '';
             let safePoNo = item.po_no ? String(item.po_no).trim() : '';
             let rawWorkCode = workItemsMap[item.id_work] || item.id_work || '';
             let safeWorkCode = String(rawWorkCode).trim();
 
-            let matchOrder = !orderVal || safeOrderNo === orderVal;
+            let matchOrder = !orderVal || safeOrderNo === orderVal || safeOrderNo.toLowerCase().includes(orderVal.toLowerCase());
             let matchPo = !poVal || safePoNo === poVal;
             let matchWork = !workVal || safeWorkCode === workVal;
             
+            // ตรวจสอบว่าผู้ใช้จงใจพิมพ์ค้นหาเลขใบสั่งนี้แบบเป๊ะๆ หรือไม่
+            let isExactSearch = (orderVal !== '' && safeOrderNo.toLowerCase() === orderVal.toLowerCase());
+
+            // ถ้าใบสั่งถูกซ่อนไว้ และผู้ใช้ไม่ได้เจาะจงค้นหามัน -> ให้กรองออก (ซ่อนจากตาราง)
+            if (hiddenOrders.includes(safeOrderNo) && !isExactSearch) {
+                return false;
+            }
+
             return matchOrder && matchPo && matchWork;
         });
 
@@ -603,6 +727,7 @@
         const thead = document.getElementById('reportTableHead');
         let html = `
             <tr>
+                <th class="text-center-col" style="font-size: 0.7rem; color: #ff3366;">ซ่อน</th>
                 <th>เลขที่ใบสั่ง</th>
                 <th>รหัสสินค้า</th>
                 <th>PO_NO</th>
@@ -626,7 +751,8 @@
         const tbody = document.getElementById('reportTableBody');
         tbody.innerHTML = '';
 
-        const totalColumns = 5 + (allProductionSteps.length * 2);
+        const totalColumns = 6 + (allProductionSteps.length * 2);
+        let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
 
         if (data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="${totalColumns}" class="text-center text-muted py-3" style="position:static;">ไม่พบข้อมูลใบสั่งที่ตรงกับเงื่อนไข</td></tr>`;
@@ -634,13 +760,26 @@
         }
 
         data.forEach(order => {
+            let safeOrderNo = order.order_no ? String(order.order_no).trim() : '-';
             let workCode = workItemsMap[order.id_work] || order.id_work || '-';
             let orderQty = order.quantity || 0;
             let prodBySteps = aggregatedProduction[order.id_order] || {};
+            
+            // เช็คว่าใบสั่งนี้ถูกซ่อนอยู่หรือไม่
+            let isHidden = hiddenOrders.includes(safeOrderNo);
 
             let tr = document.createElement('tr');
+            
+            // ถ้าแถวนั้นถูกตั้งซ่อนไว้ แต่ถูกค้นหาขึ้นมา จะโชว์พื้นหลังให้ดูหม่นๆ เล็กน้อย
+            if (isHidden) {
+                tr.style.opacity = "0.6"; 
+            }
+
             let rowHtml = `
-                <td class="fw-bold text-success">${order.order_no || '-'}</td>
+                <td class="text-center-col">
+                    <input type="checkbox" class="hide-checkbox" ${isHidden ? 'checked' : ''} onchange="toggleHideOrder('${safeOrderNo}', this.checked)" title="คลิกเพื่อซ่อน/เลิกซ่อน">
+                </td>
+                <td class="fw-bold text-success">${safeOrderNo}</td>
                 <td class="text-info">${workCode}</td>
                 <td>${order.po_no || '-'}</td>
                 <td class="text-right-col fw-bold">${formatNumber(orderQty)}</td>
