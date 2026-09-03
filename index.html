@@ -293,7 +293,7 @@
         }
 
         /* -------------------------------------------
-           การจัดคอลัมน์แบบ Sticky 6 คอลัมน์ด้านซ้าย 
+            การจัดคอลัมน์แบบ Sticky 5 คอลัมน์ด้านซ้าย 
         --------------------------------------------- */
         .table-container {
             width: 100%;
@@ -330,20 +330,18 @@
             z-index: 10;
         }
 
-        /* ปรับเพิ่มคอลัมน์ซ่อน (กว้าง 50px) เป็นลำดับที่ 1 */
-        th:nth-child(1), td:nth-child(1) { position: sticky; left: 0px; min-width: 50px; max-width: 50px; background-color: var(--table-bg); z-index: 2; text-align: center; }
-        th:nth-child(2), td:nth-child(2) { position: sticky; left: 50px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(3), td:nth-child(3) { position: sticky; left: 170px; min-width: 160px; max-width: 160px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(4), td:nth-child(4) { position: sticky; left: 330px; min-width: 130px; max-width: 130px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(5), td:nth-child(5) { position: sticky; left: 460px; min-width: 110px; max-width: 110px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(6), td:nth-child(6) { position: sticky; left: 570px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; border-right: 2px solid var(--neon-green); }
+        /* รวมปุ่มซ่อน และ รหัส 5 หลัก ไว้ที่คอลัมน์แรกสุด (140px) */
+        th:nth-child(1), td:nth-child(1) { position: sticky; left: 0px; min-width: 140px; max-width: 140px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(2), td:nth-child(2) { position: sticky; left: 140px; min-width: 160px; max-width: 160px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(3), td:nth-child(3) { position: sticky; left: 300px; min-width: 130px; max-width: 130px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(4), td:nth-child(4) { position: sticky; left: 430px; min-width: 110px; max-width: 110px; background-color: var(--table-bg); z-index: 2; }
+        th:nth-child(5), td:nth-child(5) { position: sticky; left: 540px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; border-right: 2px solid var(--neon-green); }
 
         thead th:nth-child(1),
         thead th:nth-child(2),
         thead th:nth-child(3),
         thead th:nth-child(4),
-        thead th:nth-child(5),
-        thead th:nth-child(6) {
+        thead th:nth-child(5) {
             z-index: 12;
             background-color: #05140c;
         }
@@ -356,8 +354,7 @@
         tr:hover td:nth-child(2),
         tr:hover td:nth-child(3),
         tr:hover td:nth-child(4),
-        tr:hover td:nth-child(5),
-        tr:hover td:nth-child(6) {
+        tr:hover td:nth-child(5) {
             background-color: #0b2e1c;
         }
 
@@ -375,6 +372,7 @@
             height: 18px;
             accent-color: #ff3366;
             cursor: pointer;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -628,7 +626,6 @@
         input.value = orderNo;
         dropdown.style.display = 'none';
 
-        // แจ้งเตือนหากผู้ใช้พยายามค้นหาใบสั่งที่ถูกตั้งค่าซ่อนไว้
         let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
         if (hiddenOrders.includes(orderNo)) {
             alert('แจ้งเตือน: แถวนี้ถูกปิดการแสดงไว้ (เนื่องจากจบใบสั่งแล้วหรือยังไม่มีข้อมูล)\nคุณสามารถติ๊กเอาเครื่องหมายถูกออกเพื่อนำกลับมาแสดงตามปกติได้ครับ');
@@ -644,7 +641,6 @@
             let val = document.getElementById('filter_order').value.trim();
             let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
             
-            // แจ้งเตือนหากค้นหาใบสั่งที่ซ่อนไว้ด้วยการกด Enter
             if (hiddenOrders.includes(val)) {
                 alert('แจ้งเตือน: แถวนี้ถูกปิดการแสดงไว้ (เนื่องจากจบใบสั่งแล้วหรือยังไม่มีข้อมูล)\nคุณสามารถติ๊กเอาเครื่องหมายถูกออกเพื่อนำกลับมาแสดงตามปกติได้ครับ');
             }
@@ -679,10 +675,8 @@
             let matchPo = !poVal || safePoNo === poVal;
             let matchWork = !workVal || safeWorkCode === workVal;
             
-            // ตรวจสอบว่าผู้ใช้จงใจพิมพ์ค้นหาเลขใบสั่งนี้แบบเป๊ะๆ หรือไม่
             let isExactSearch = (orderVal !== '' && safeOrderNo.toLowerCase() === orderVal.toLowerCase());
 
-            // ถ้าใบสั่งถูกซ่อนไว้ และผู้ใช้ไม่ได้เจาะจงค้นหามัน -> ให้กรองออก (ซ่อนจากตาราง)
             if (hiddenOrders.includes(safeOrderNo) && !isExactSearch) {
                 return false;
             }
@@ -727,8 +721,7 @@
         const thead = document.getElementById('reportTableHead');
         let html = `
             <tr>
-                <th class="text-center-col" style="font-size: 0.7rem; color: #ff3366;">ซ่อน</th>
-                <th>เลขที่ใบสั่ง</th>
+                <th style="padding-left:12px;">เลขที่ใบสั่ง</th>
                 <th>รหัสสินค้า</th>
                 <th>PO_NO</th>
                 <th class="text-right-col">ยอดสั่งผลิต</th>
@@ -751,7 +744,7 @@
         const tbody = document.getElementById('reportTableBody');
         tbody.innerHTML = '';
 
-        const totalColumns = 6 + (allProductionSteps.length * 2);
+        const totalColumns = 5 + (allProductionSteps.length * 2);
         let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
 
         if (data.length === 0) {
@@ -765,21 +758,21 @@
             let orderQty = order.quantity || 0;
             let prodBySteps = aggregatedProduction[order.id_order] || {};
             
-            // เช็คว่าใบสั่งนี้ถูกซ่อนอยู่หรือไม่
             let isHidden = hiddenOrders.includes(safeOrderNo);
 
             let tr = document.createElement('tr');
             
-            // ถ้าแถวนั้นถูกตั้งซ่อนไว้ แต่ถูกค้นหาขึ้นมา จะโชว์พื้นหลังให้ดูหม่นๆ เล็กน้อย
             if (isHidden) {
-                tr.style.opacity = "0.6"; 
+                tr.style.opacity = "0.5"; 
             }
 
             let rowHtml = `
-                <td class="text-center-col">
-                    <input type="checkbox" class="hide-checkbox" ${isHidden ? 'checked' : ''} onchange="toggleHideOrder('${safeOrderNo}', this.checked)" title="คลิกเพื่อซ่อน/เลิกซ่อน">
+                <td>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 5px;">
+                        <span class="fw-bold text-success" style="${isHidden ? 'text-decoration: line-through; color: #8ca89a !important;' : ''}">${safeOrderNo}</span>
+                        <input type="checkbox" class="hide-checkbox" ${isHidden ? 'checked' : ''} onchange="toggleHideOrder('${safeOrderNo}', this.checked)" title="ติ๊กเพื่อซ่อน/เลิกซ่อน">
+                    </div>
                 </td>
-                <td class="fw-bold text-success">${safeOrderNo}</td>
                 <td class="text-info">${workCode}</td>
                 <td>${order.po_no || '-'}</td>
                 <td class="text-right-col fw-bold">${formatNumber(orderQty)}</td>
