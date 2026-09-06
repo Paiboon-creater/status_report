@@ -362,8 +362,8 @@
             <div class="filter-group" style="min-width: 90px; max-width: 120px;">
                 <label>ตรึงคอลัมน์:</label>
                 <select id="freeze_col" class="form-select-stock" onchange="updateStickyColumns()">
-                    <option value="0">ไม่ตรึง</option>
-                    <option value="1" selected>1 คอลัมน์</option>
+                    <option value="0" selected>ไม่ตรึง</option>
+                    <option value="1">1 คอลัมน์</option>
                     <option value="2">2 คอลัมน์</option>
                     <option value="3">3 คอลัมน์</option>
                     <option value="4">4 คอลัมน์</option>
@@ -374,7 +374,7 @@
                 <button class="clear-btn" onclick="clearFilters()">ล้างตัวกรอง</button>
                 <div class="form-check form-switch ms-2 pb-1">
                     <input class="form-check-input" type="checkbox" id="showHiddenToggle" onchange="applyFilters()">
-                    <label class="form-check-label" for="showHiddenToggle">แสดงรายการที่ถูกซ่อน</label>
+                    <label class="form-check-label" for="showHiddenToggle">แสดงรายการที่ซ่อน</label>
                 </div>
             </div>
         </div>
@@ -419,11 +419,11 @@
         </ul>
 
         <h5>2. การตรึงคอลัมน์ (Sticky Columns)</h5>
-        <p>คุณสามารถตั้งค่า <b>"ตรึงคอลัมน์"</b> (ค่าเริ่มต้นคือ 1 คอลัมน์) เพื่อให้คอลัมน์ด้านซ้ายไม่เลื่อนหายไปเวลาคุณปัดหน้าจอไปทางขวา ซึ่งมีประโยชน์มากเมื่อดูผ่านโทรศัพท์มือถือ</p>
+        <p>คุณสามารถตั้งค่า <b>"ตรึงคอลัมน์"</b> (ค่าเริ่มต้นคือ ไม่ตรึง) เพื่อให้คอลัมน์ด้านซ้ายไม่เลื่อนหายไปเวลาคุณปัดหน้าจอไปทางขวา ซึ่งมีประโยชน์มากเมื่อดูข้อมูลในตารางยาวๆ</p>
 
         <h5>3. การซ่อนรายการที่ทำเสร็จแล้ว (Hide Completed Orders)</h5>
         <p>หากรายการใดผลิตเสร็จสิ้นแล้ว คุณสามารถกด <b>ติ๊กถูกที่กล่องสี่เหลี่ยม</b> หน้าเลขที่ใบสั่ง รายการนั้นจะถูกซ่อนและหายไปจากตารางทันทีเพื่อให้หน้าจอดูสะอาดตา<br>
-        *หากต้องการดูรายการที่ซ่อนไปแล้ว หรือต้องการกู้คืน ให้กดเปิดสวิตช์ <b>"แสดงรายการที่ถูกซ่อน"</b> ที่แถบเมนูด้านบน แถวที่ถูกซ่อนจะแสดงขึ้นมาแบบจางๆ ให้คุณติ๊กออกเพื่อกู้คืนได้</p>
+        *หากต้องการดูรายการที่ซ่อนไปแล้ว หรือต้องการกู้คืน ให้กดเปิดสวิตช์ <b>"แสดงรายการที่ซ่อน"</b> ที่แถบเมนูด้านบน แถวที่ถูกซ่อนจะแสดงขึ้นมาแบบจางๆ ให้คุณติ๊กออกเพื่อกู้คืนได้</p>
 
         <h5>4. การกรองและการส่งออกข้อมูล</h5>
         <ul>
@@ -783,7 +783,7 @@
         });
         
         if (tbody.children.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${totalColumns}" class="text-center text-muted py-3" style="position:static;">ไม่มีข้อมูล (รายการอาจถูกติ๊กซ่อนไว้ทั้งหมด ลองเปิดสวิตช์แสดงรายการที่ถูกซ่อนดูนะครับ)</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${totalColumns}" class="text-center text-muted py-3" style="position:static;">ไม่มีข้อมูล (รายการอาจถูกติ๊กซ่อนไว้ทั้งหมด ลองเปิดสวิตช์แสดงรายการที่ซ่อนดูนะครับ)</td></tr>`;
         }
     }
 
