@@ -20,6 +20,7 @@
             --neon-green: #00ff88;
             --neon-glow: rgba(0, 255, 136, 0.3);
             --neon-red: #ff3366;
+            --neon-blue: #00e5ff;
             --input-bg: #112a1e;
             --input-text: #ffffff;
             --table-bg: #071910;
@@ -28,7 +29,7 @@
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Courier New', Courier, monospace, sans-serif;
             min-height: 100vh;
             margin: 0;
             padding: 10px;
@@ -104,7 +105,8 @@
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .refresh-status {
@@ -113,6 +115,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            margin-right: 5px;
         }
 
         .pulse-dot {
@@ -129,11 +132,8 @@
             100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
         }
 
-        .home-btn {
+        .nav-btn {
             background: transparent;
-            border: 1px solid #f5a623;
-            color: #f5a623;
-            padding: 8px 16px;
             border-radius: 6px;
             font-weight: bold;
             font-size: 0.8rem;
@@ -141,35 +141,19 @@
             transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             text-decoration: none;
+            padding: 8px 12px;
         }
+        
+        .manual-btn { border: 1px solid var(--neon-blue); color: var(--neon-blue); }
+        .manual-btn:hover { background: var(--neon-blue); color: var(--bg-dark); box-shadow: 0 0 12px rgba(0, 229, 255, 0.5); }
+        
+        .home-btn { border: 1px solid #f5a623; color: #f5a623; }
+        .home-btn:hover { background: #f5a623; color: var(--bg-dark); box-shadow: 0 0 12px rgba(245, 166, 35, 0.5); }
 
-        .home-btn:hover {
-            background: #f5a623;
-            color: var(--bg-dark);
-            box-shadow: 0 0 12px rgba(245, 166, 35, 0.5);
-        }
-
-        .excel-btn {
-            background: linear-gradient(135deg, #0f5132, #0a3622);
-            border: 1px solid #198754;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .excel-btn:hover {
-            background: #198754;
-            box-shadow: 0 0 12px rgba(25, 135, 84, 0.5);
-        }
+        .excel-btn { background: linear-gradient(135deg, #0f5132, #0a3622); border: 1px solid #198754; color: #fff; }
+        .excel-btn:hover { background: #198754; box-shadow: 0 0 12px rgba(25, 135, 84, 0.5); }
 
         .filter-panel {
             background: var(--table-bg);
@@ -181,12 +165,19 @@
             justify-content: space-between;
             align-items: flex-end;
             flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filter-controls-group {
+            display: flex;
             gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
         }
 
         .filter-group {
             flex: 1;
-            min-width: 180px;
+            min-width: 140px;
         }
 
         .filter-group label {
@@ -226,12 +217,21 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s;
+            height: 33px;
         }
 
-        .clear-btn:hover {
-            background: #343a40;
-            color: #fff;
+        .clear-btn:hover { background: #343a40; color: #fff; }
+
+        .form-switch .form-check-input {
+            background-color: #343a40;
+            border-color: #495057;
+            cursor: pointer;
         }
+        .form-switch .form-check-input:checked {
+            background-color: var(--neon-green);
+            border-color: var(--neon-green);
+        }
+        .form-switch label { font-size: 0.8rem; color: var(--text-label); cursor: pointer; margin-top: 4px;}
 
         .status-legend {
             display: flex;
@@ -240,126 +240,42 @@
             font-size: 0.75rem;
             color: var(--text-muted);
             flex-wrap: wrap;
+            width: 100%;
+            margin-top: 5px;
+            border-top: 1px dashed var(--border-dim);
+            padding-top: 10px;
         }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-box { width: 14px; height: 14px; border-radius: 3px; }
 
-        .legend-box {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
-        }
-
-        /* -------------------------------------------
-            การออกแบบ Checkbox ใหม่ให้เข้ากับ Theme
-        --------------------------------------------- */
         .theme-checkbox {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            min-width: 18px;
+            appearance: none; -webkit-appearance: none;
+            width: 18px; height: 18px; min-width: 18px;
             border: 1px solid var(--border-dim);
             background-color: rgba(0,0,0,0.4);
-            border-radius: 4px;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.2s ease;
-            margin: 0;
-            display: inline-block;
-            vertical-align: middle;
+            border-radius: 4px; cursor: pointer;
+            position: relative; transition: all 0.2s ease;
+            margin: 0; display: inline-block; vertical-align: middle;
         }
-
-        .theme-checkbox:hover {
-            border-color: var(--neon-green);
-        }
-
-        .theme-checkbox:checked {
-            background-color: rgba(255, 51, 102, 0.15);
-            border-color: var(--neon-red);
-        }
-
+        .theme-checkbox:hover { border-color: var(--neon-green); }
+        .theme-checkbox:checked { background-color: rgba(255, 51, 102, 0.15); border-color: var(--neon-red); }
         .theme-checkbox:checked::after {
-            content: '';
-            position: absolute;
-            left: 5px;
-            top: 2px;
-            width: 6px;
-            height: 10px;
-            border: solid var(--neon-red);
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
+            content: ''; position: absolute; left: 5px; top: 2px;
+            width: 6px; height: 10px; border: solid var(--neon-red);
+            border-width: 0 2px 2px 0; transform: rotate(45deg);
         }
 
-        /* -------------------------------------------
-            การจัดคอลัมน์แบบ Sticky 5 คอลัมน์ด้านซ้าย 
-        --------------------------------------------- */
         .table-container {
-            width: 100%;
-            overflow-x: auto;
-            overflow-y: auto;
-            background: var(--table-bg);
-            border: 1px solid var(--border-dim);
-            border-radius: 8px;
-            max-height: 70vh;
-            position: relative;
+            width: 100%; overflow-x: auto; overflow-y: auto;
+            background: var(--table-bg); border: 1px solid var(--border-dim);
+            border-radius: 8px; max-height: 70vh; position: relative;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-            white-space: nowrap;
-        }
-
-        th, td {
-            padding: 9px 10px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-dim);
-            border-right: 1px solid rgba(23, 99, 60, 0.3);
-        }
-
-        thead th {
-            position: sticky;
-            top: 0;
-            background-color: #05140c;
-            color: var(--neon-green);
-            font-weight: bold;
-            text-transform: uppercase;
-            z-index: 10;
-        }
-
-        /* ตรึง 5 คอลัมน์แรก - ปรับระยะให้พอดีกับการจัดวางใหม่ */
-        th:nth-child(1), td:nth-child(1) { position: sticky; left: 0px; min-width: 175px; max-width: 175px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(2), td:nth-child(2) { position: sticky; left: 175px; min-width: 160px; max-width: 160px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(3), td:nth-child(3) { position: sticky; left: 335px; min-width: 130px; max-width: 130px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(4), td:nth-child(4) { position: sticky; left: 465px; min-width: 110px; max-width: 110px; background-color: var(--table-bg); z-index: 2; }
-        th:nth-child(5), td:nth-child(5) { position: sticky; left: 575px; min-width: 120px; max-width: 120px; background-color: var(--table-bg); z-index: 2; border-right: 2px solid var(--neon-green); }
-
-        thead th:nth-child(1),
-        thead th:nth-child(2),
-        thead th:nth-child(3),
-        thead th:nth-child(4),
-        thead th:nth-child(5) {
-            z-index: 12;
-            background-color: #05140c;
-        }
-
-        tr:hover td {
-            background-color: rgba(0, 255, 136, 0.05);
-        }
-        
-        tr:hover td:nth-child(1),
-        tr:hover td:nth-child(2),
-        tr:hover td:nth-child(3),
-        tr:hover td:nth-child(4),
-        tr:hover td:nth-child(5) {
-            background-color: #0b2e1c;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; white-space: nowrap; }
+        th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border-dim); border-right: 1px solid rgba(23, 99, 60, 0.3); }
+        thead th { position: sticky; top: 0; background-color: #05140c; color: var(--neon-green); font-weight: bold; text-transform: uppercase; z-index: 10; }
+        tr:hover td { background-color: rgba(0, 255, 136, 0.05); }
 
         .bg-status-green { background-color: #0b3b22 !important; color: #00ff88 !important; font-weight: bold; }
         .bg-status-yellow { background-color: #4a3f11 !important; color: #f5a623 !important; font-weight: bold; }
@@ -368,7 +284,37 @@
 
         .text-center-col { text-align: center; }
         .text-right-col { text-align: right; }
+
+        /* Modal คู่มือ */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(3, 8, 6, 0.85); z-index: 2000;
+            justify-content: center; align-items: center; padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .manual-box {
+            width: 100%; max-width: 700px; max-height: 85vh;
+            background: var(--panel-bg); border: 2px solid var(--neon-blue);
+            border-radius: 12px; padding: 20px; overflow-y: auto;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.3); font-family: sans-serif;
+        }
+        .manual-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px dashed var(--border-dim); padding-bottom: 10px; margin-bottom: 15px;
+        }
+        .manual-box h3 { color: var(--neon-blue); margin: 0; font-family: 'Courier New', Courier, monospace; font-weight: bold;}
+        .manual-box h5 { color: var(--neon-green); margin-top: 15px; margin-bottom: 8px;}
+        .manual-box p, .manual-box li { color: #d1e8df; font-size: 0.95rem; line-height: 1.5; }
+        .manual-box ul { padding-left: 20px; margin-bottom: 15px;}
+        .close-modal-btn {
+            background: transparent; border: 1px solid var(--neon-red); color: var(--neon-red);
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px;
+        }
+        .close-modal-btn:hover { background: var(--neon-red); color: #fff; }
     </style>
+    
+    <!-- Dynamic Style สำหรับตรึงคอลัมน์ -->
+    <style id="dynamic-sticky-style"></style>
 </head>
 <body>
 
@@ -380,41 +326,61 @@
             </div>
             <div class="title-text">
                 <h1>JAGUAR PRODUCTION STATUS REPORT</h1>
-                <span>A4 LANDSCAPE OPTIMIZED | AUTO-SYNC: 30s | STICKY COLUMNS</span>
+                <span>LIVE STOCK VIEW | AUTO-SYNC: 30s</span>
             </div>
         </div>
         <div class="header-actions">
             <div class="refresh-status" id="syncStatus">
                 <div class="pulse-dot"></div> LIVE SYNC ACTIVE
             </div>
-            <a href="https://paiboon-creater.github.io/Data_Information_Jaguar_productions/" class="home-btn">
+            <button class="nav-btn manual-btn" onclick="openManual()">
+                <i class="fa-solid fa-book"></i> คู่มือ
+            </button>
+            <a href="https://paiboon-creater.github.io/Data_Information_Jaguar_productions/" class="nav-btn home-btn">
                 <i class="fa-solid fa-house"></i> Home App
             </a>
-            <button class="excel-btn" onclick="exportToExcel()">
-                <i class="fa-solid fa-file-excel"></i> ดาวน์โหลดไฟล์ EXCEL
+            <button class="nav-btn excel-btn" onclick="exportToExcel()">
+                <i class="fa-solid fa-file-excel"></i> ดาวน์โหลด EXCEL
             </button>
         </div>
     </div>
 
     <div class="filter-panel">
-        <div class="filter-group">
-            <label for="filter_po">PO_No:</label>
-            <select id="filter_po" class="form-select-stock" onchange="applyFilters()">
-                <option value="">-- ทุก PO_No --</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label for="filter_work">รหัสสินค้า:</label>
-            <select id="filter_work" class="form-select-stock" onchange="applyFilters()">
-                <option value="">-- ทุกรหัสสินค้า --</option>
-            </select>
-        </div>
-        <div>
-            <button class="clear-btn" onclick="clearFilters()">ล้างตัวกรอง</button>
+        <div class="filter-controls-group">
+            <div class="filter-group">
+                <label>PO_No:</label>
+                <select id="filter_po" class="form-select-stock" onchange="applyFilters()">
+                    <option value="">-- ทุก PO_No --</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>รหัสสินค้า:</label>
+                <select id="filter_work" class="form-select-stock" onchange="applyFilters()">
+                    <option value="">-- ทุกรหัสสินค้า --</option>
+                </select>
+            </div>
+            <div class="filter-group" style="min-width: 90px; max-width: 120px;">
+                <label>ตรึงคอลัมน์:</label>
+                <select id="freeze_col" class="form-select-stock" onchange="updateStickyColumns()">
+                    <option value="0">ไม่ตรึง</option>
+                    <option value="1" selected>1 คอลัมน์</option>
+                    <option value="2">2 คอลัมน์</option>
+                    <option value="3">3 คอลัมน์</option>
+                    <option value="4">4 คอลัมน์</option>
+                    <option value="5">5 คอลัมน์</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: flex-end; gap: 10px;">
+                <button class="clear-btn" onclick="clearFilters()">ล้างตัวกรอง</button>
+                <div class="form-check form-switch ms-2 pb-1">
+                    <input class="form-check-input" type="checkbox" id="showHiddenToggle" onchange="applyFilters()">
+                    <label class="form-check-label" for="showHiddenToggle">แสดงรายการที่ถูกซ่อน</label>
+                </div>
+            </div>
         </div>
         
         <div class="status-legend">
-            <div class="legend-item"><div class="legend-box" style="background:#0b3b22; border:1px solid #00ff88;"></div> 100%+</div>
+            <div class="legend-item"><div class="legend-box" style="background:#0b3b22; border:1px solid #00ff88;"></div> 100%+ (ครบ)</div>
             <div class="legend-item"><div class="legend-box" style="background:#4a3f11; border:1px solid #f5a623;"></div> 75-99%</div>
             <div class="legend-item"><div class="legend-box" style="background:#4a2911; border:1px solid #e07a3a;"></div> 30-74%</div>
             <div class="legend-item"><div class="legend-box" style="background:#3b0b14; border:1px solid #ff3366;"></div> 1-29%</div>
@@ -430,6 +396,42 @@
                 <tr><td class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i> กำลังประมวลผลข้อมูลจากระบบฐานข้อมูล...</td></tr>
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modal คู่มือการใช้งาน -->
+<div id="manualModal" class="modal-overlay">
+    <div class="manual-box">
+        <div class="manual-header">
+            <h3><i class="fa-solid fa-book-open"></i> คู่มือการใช้งานระบบรายงาน</h3>
+            <button class="nav-btn manual-btn" onclick="printManual()" style="padding: 6px 12px; font-size: 0.85rem;">
+                <i class="fa-solid fa-print"></i> พริ้นต์คู่มือ
+            </button>
+        </div>
+        
+        <h5>1. การอ่านแถบสีสถานะ (Progress Colors)</h5>
+        <p>ตัวเลขเปอร์เซ็นต์ในตารางจะเปลี่ยนสีตามความคืบหน้าของยอดผลิตเทียบกับยอดสั่งผลิต (PO):</p>
+        <ul>
+            <li><span style="color:var(--neon-green); font-weight:bold;">สีเขียว (100%+)</span>: ผลิตครบหรือเกินยอดสั่งผลิตแล้ว</li>
+            <li><span style="color:#f5a623; font-weight:bold;">สีเหลือง (75-99%)</span>: ใกล้เสร็จสมบูรณ์</li>
+            <li><span style="color:#e07a3a; font-weight:bold;">สีส้ม (30-74%)</span>: อยู่ระหว่างดำเนินการ</li>
+            <li><span style="color:var(--neon-red); font-weight:bold;">สีแดง (1-29%)</span>: เพิ่งเริ่มดำเนินการหรือยอดผลิตยังน้อย</li>
+        </ul>
+
+        <h5>2. การตรึงคอลัมน์ (Sticky Columns)</h5>
+        <p>คุณสามารถตั้งค่า <b>"ตรึงคอลัมน์"</b> (ค่าเริ่มต้นคือ 1 คอลัมน์) เพื่อให้คอลัมน์ด้านซ้ายไม่เลื่อนหายไปเวลาคุณปัดหน้าจอไปทางขวา ซึ่งมีประโยชน์มากเมื่อดูผ่านโทรศัพท์มือถือ</p>
+
+        <h5>3. การซ่อนรายการที่ทำเสร็จแล้ว (Hide Completed Orders)</h5>
+        <p>หากรายการใดผลิตเสร็จสิ้นแล้ว คุณสามารถกด <b>ติ๊กถูกที่กล่องสี่เหลี่ยม</b> หน้าเลขที่ใบสั่ง รายการนั้นจะถูกซ่อนและหายไปจากตารางทันทีเพื่อให้หน้าจอดูสะอาดตา<br>
+        *หากต้องการดูรายการที่ซ่อนไปแล้ว หรือต้องการกู้คืน ให้กดเปิดสวิตช์ <b>"แสดงรายการที่ถูกซ่อน"</b> ที่แถบเมนูด้านบน แถวที่ถูกซ่อนจะแสดงขึ้นมาแบบจางๆ ให้คุณติ๊กออกเพื่อกู้คืนได้</p>
+
+        <h5>4. การกรองและการส่งออกข้อมูล</h5>
+        <ul>
+            <li>ใช้ช่อง <b>PO_No</b> หรือ <b>รหัสสินค้า</b> เพื่อค้นหาเฉพาะรายการที่ต้องการ</li>
+            <li>กดปุ่ม <b>ดาวน์โหลด EXCEL</b> เพื่อนำข้อมูลทั้งหมดที่แสดงอยู่บนตารางในขณะนั้น ออกไปเป็นไฟล์ .xlsx ทันที</li>
+        </ul>
+
+        <button class="close-modal-btn" onclick="closeManual()">[X] ปิดหน้าต่างคู่มือ</button>
     </div>
 </div>
 
@@ -466,9 +468,91 @@
     let isFirstLoad = true;
 
     window.onload = async function() {
+        updateStickyColumns();
+        
         await fetchAllData();
         setInterval(fetchAllData, 30000); 
     };
+
+    // --- ฟังก์ชันจัดการเรื่องตรึงคอลัมน์ (Sticky Columns) ---
+    function updateStickyColumns() {
+        const freezeCount = parseInt(document.getElementById('freeze_col').value);
+        let styleHtml = '';
+        
+        if (freezeCount > 0) {
+            // ความกว้างโดยประมาณของ 5 คอลัมน์แรก
+            const widths = [175, 160, 130, 110, 120];
+            let currentLeft = 0;
+            
+            for(let i = 1; i <= freezeCount; i++) {
+                styleHtml += `
+                    th:nth-child(${i}), td:nth-child(${i}) {
+                        position: sticky;
+                        left: ${currentLeft}px;
+                        min-width: ${widths[i-1]}px;
+                        max-width: ${widths[i-1]}px;
+                        background-color: var(--table-bg);
+                        z-index: 2;
+                    }
+                    thead th:nth-child(${i}) {
+                        z-index: 12;
+                        background-color: #05140c;
+                    }
+                    tr:hover td:nth-child(${i}) {
+                        background-color: #0b2e1c;
+                    }
+                `;
+                
+                // ใส่เส้นขอบขวาให้คอลัมน์สุดท้ายที่ถูกตรึง
+                if (i === freezeCount) {
+                    styleHtml += `th:nth-child(${i}), td:nth-child(${i}) { border-right: 2px solid var(--neon-green); }`;
+                }
+                
+                currentLeft += widths[i-1];
+            }
+        }
+        
+        document.getElementById('dynamic-sticky-style').innerHTML = styleHtml;
+    }
+
+    // --- ฟังก์ชันคู่มือ ---
+    function openManual() {
+        document.getElementById('manualModal').style.display = 'flex';
+    }
+
+    function closeManual() {
+        document.getElementById('manualModal').style.display = 'none';
+    }
+
+    function printManual() {
+        const manualContent = document.querySelector('.manual-box').cloneNode(true);
+        const buttons = manualContent.querySelectorAll('button');
+        buttons.forEach(btn => btn.remove()); // เอาปุ่มออกก่อนพริ้นต์
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>คู่มือการใช้งานระบบรายงาน</title>
+                <style>
+                    body { font-family: Tahoma, sans-serif; color: #000; line-height: 1.6; padding: 20px; }
+                    h3 { color: #000; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                    h5 { color: #333; margin-top: 20px; font-size: 16px; }
+                    ul { padding-left: 20px; }
+                </style>
+            </head>
+            <body>
+                ${manualContent.innerHTML}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 200);
+    }
 
     async function fetchAllData() {
         try {
@@ -557,7 +641,6 @@
         });
     }
 
-    // ฟังก์ชันสำหรับบันทึกสถานะการติ๊กซ่อน
     function toggleHideOrder(orderNo, isChecked) {
         let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
         if (isChecked) {
@@ -647,6 +730,7 @@
 
         const totalColumns = 5 + (allProductionSteps.length * 2);
         let hiddenOrders = JSON.parse(localStorage.getItem('hiddenOrders') || '[]');
+        let showHiddenItems = document.getElementById('showHiddenToggle').checked;
 
         if (data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="${totalColumns}" class="text-center text-muted py-3" style="position:static;">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
@@ -655,19 +739,24 @@
 
         data.forEach(order => {
             let safeOrderNo = order.order_no ? String(order.order_no).trim() : '-';
+            let isHidden = hiddenOrders.includes(safeOrderNo);
+            
+            // ข้ามการ Render ถ้าออเดอร์นี้ถูกซ่อน และไม่ได้เปิดโหมดโชว์ของที่ถูกซ่อน
+            if (isHidden && !showHiddenItems) {
+                return;
+            }
+
             let workCode = workItemsMap[order.id_work] || order.id_work || '-';
             let orderQty = order.quantity || 0;
             let prodBySteps = aggregatedProduction[order.id_order] || {};
             
-            let isHidden = hiddenOrders.includes(safeOrderNo);
             let tr = document.createElement('tr');
             
-            // ถ้ามีการกดติ๊กซ่อน ให้จางสีลง
+            // ทำให้สีจางลงหากอยู่ในสถานะถูกซ่อนแต่เปิดโชว์อยู่
             if (isHidden) {
-                tr.style.opacity = "0.5"; 
+                tr.style.opacity = "0.4"; 
             }
             
-            // ปรับระยะและวาง Checkbox ไว้ด้านหน้าเพื่อให้ตรงดิ่งเป็นแนวเดียวกัน
             let rowHtml = `
                 <td style="padding-left:12px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -692,6 +781,10 @@
             tr.innerHTML = rowHtml;
             tbody.appendChild(tr);
         });
+        
+        if (tbody.children.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${totalColumns}" class="text-center text-muted py-3" style="position:static;">ไม่มีข้อมูล (รายการอาจถูกติ๊กซ่อนไว้ทั้งหมด ลองเปิดสวิตช์แสดงรายการที่ถูกซ่อนดูนะครับ)</td></tr>`;
+        }
     }
 
     function exportToExcel() {
