@@ -558,12 +558,13 @@
         try {
             document.getElementById('syncStatus').innerHTML = '<div class="pulse-dot" style="background:#f5a623;"></div> SYNCING...';
 
+            // เพิ่ม cache: 'no-store' และ &limit=10000 เพื่อแก้ปัญหาอัปเดตไม่ติด
             const [ordersRes, workItemsRes, stepsRes, targetsRes, dailyRes] = await Promise.all([
-                fetch(`${SUPABASE_URL}/orders?select=*&order=order_no.asc`, { headers }),
-                fetch(`${SUPABASE_URL}/work_items?select=id_work,work_code`, { headers }),
-                fetch(`${SUPABASE_URL}/production_steps?select=id_step,step_name&order=id_step.asc`, { headers }),
-                fetch(`${SUPABASE_URL}/targets?select=id_target,id_step`, { headers }),
-                fetch(`${SUPABASE_URL}/daily_production?select=id_order,id_target,produced_amount`, { headers })
+                fetch(`${SUPABASE_URL}/orders?select=*&order=order_no.asc`, { headers, cache: 'no-store' }),
+                fetch(`${SUPABASE_URL}/work_items?select=id_work,work_code`, { headers, cache: 'no-store' }),
+                fetch(`${SUPABASE_URL}/production_steps?select=id_step,step_name&order=id_step.asc`, { headers, cache: 'no-store' }),
+                fetch(`${SUPABASE_URL}/targets?select=id_target,id_step`, { headers, cache: 'no-store' }),
+                fetch(`${SUPABASE_URL}/daily_production?select=id_order,id_target,produced_amount&limit=10000`, { headers, cache: 'no-store' })
             ]);
 
             if (!ordersRes.ok || !dailyRes.ok) throw new Error("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล");
