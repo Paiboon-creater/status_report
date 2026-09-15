@@ -13,9 +13,9 @@
     
     <style>
         :root {
-            --bg-dark: #f0f4f8; /* พื้นหลังนุ่มนวลสบายตา */
-            --panel-bg: #ffffff; /* กล่องข้อมูลสีขาว */
-            --border-neon: #cbd5e1; /* สีเส้นขอบแบบซอฟต์ */
+            --bg-dark: #f0f4f8;
+            --panel-bg: #ffffff;
+            --border-neon: #cbd5e1;
             --border-dim: #e2e8f0;
             --text-main: #1e293b;
             --text-label: #475569;
@@ -38,7 +38,7 @@
             padding: 15px;
             overflow-x: hidden;
             -webkit-text-size-adjust: 100%;
-            font-size: 16px; /* ขยายขนาดฟอนต์พื้นฐาน */
+            font-size: 16px;
         }
 
         .dashboard-container {
@@ -47,7 +47,7 @@
             border: 1px solid var(--border-neon);
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* เงาแบบนุ่มนวล */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             box-sizing: border-box;
         }
 
@@ -262,13 +262,11 @@
             border-radius: 8px; max-height: 70vh; position: relative;
         }
 
-        /* ขยายขนาดตารางให้เต็มตา */
         table { width: 100%; border-collapse: collapse; font-size: 0.95rem; white-space: nowrap; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-dim); border-right: 1px solid var(--border-dim); }
         thead th { position: sticky; top: 0; background-color: #f8fafc; color: #334155; font-weight: bold; text-transform: uppercase; z-index: 10; border-bottom: 2px solid #cbd5e1; }
         tr:hover td { background-color: #f1f5f9; }
 
-        /* ปรับสีสถานะเป็นโทนพาสเทล อ่านง่ายสบายตา */
         .bg-status-green { background-color: #d1fae5 !important; color: #065f46 !important; font-weight: bold; }
         .bg-status-yellow { background-color: #fef3c7 !important; color: #92400e !important; font-weight: bold; }
         .bg-status-orange { background-color: #ffedd5 !important; color: #9a3412 !important; font-weight: bold; }
@@ -485,7 +483,7 @@
         let styleHtml = '';
         
         if (freezeCount > 0) {
-            const widths = [190, 170, 140, 120, 130]; /* ขยายความกว้างเผื่อฟอนต์ที่ใหญ่ขึ้น */
+            const widths = [190, 170, 140, 120, 130];
             let currentLeft = 0;
             
             for(let i = 1; i <= freezeCount; i++) {
@@ -707,6 +705,33 @@
 
     function renderTableHeader() {
         const thead = document.getElementById('reportTableHead');
+        
+        // ⚡ จัดเรียงขั้นตอนการผลิต: นำขั้นตอน "แพ็คกิ้ง" หรือ "แพ็ค" มาไว้ด้านหน้าสุด และกรองชื่อขั้นตอนที่ซ้ำกันออก
+        let seenNames = new Set();
+        let sortedSteps = [];
+        
+        // แยกขั้นตอนแพ็คกิ้งออกมาก่อน
+        let packSteps = allProductionSteps.filter(s => {
+            let name = (s.step_name || "").toLowerCase();
+            return name.includes('แพ็ค') || name.includes('packing');
+        });
+
+        let otherSteps = allProductionSteps.filter(s => {
+            let name = (s.step_name || "").toLowerCase();
+            return !name.includes('แพ็ค') && !name.includes('packing');
+        });
+
+        // รวมแพ็คกิ้งไว้กลุ่มแรก (เอาเฉพาะตัวที่ไม่ซ้ำชื่อกัน)
+        [...packSteps, ...otherSteps].forEach(step => {
+            let abbr = getStepAbbr(step.step_name);
+            if (!seenNames.has(abbr)) {
+                seenNames.add(abbr);
+                sortedSteps.push(step);
+            }
+        });
+
+        allProductionSteps = sortedSteps;
+
         let html = `
             <tr>
                 <th style="padding-left:15px;">เลขที่ใบสั่ง</th>
@@ -764,7 +789,6 @@
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <input type="checkbox" class="theme-checkbox" ${isHidden ? 'checked' : ''} onchange="toggleHideOrder('${safeOrderNo}', this.checked)" title="ติ๊กเพื่อซ่อน/เลิกซ่อน">
                         
-                        <!-- ลิงก์ไปหน้า scandal_report พร้อมปรับสีให้กลมกลืนกับธีมสว่าง -->
                         <a href="https://paiboon-creater.github.io/scandal_report/?order=${safeOrderNo}" target="_blank" class="fw-bold" style="${isHidden ? 'text-decoration: line-through; color: #94a3b8 !important;' : 'text-decoration: underline; color: #0284c7; cursor: pointer;'}">
                             ${safeOrderNo} <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size: 0.75em;"></i>
                         </a>
