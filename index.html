@@ -578,14 +578,12 @@
 
             workItems.forEach(w => workItemsMap[w.id_work] = w.work_code);
 
-            // แมป id_target ไป id_step
             let targetToStep = {};
             targets.forEach(t => {
                 targetToStep[t.id_target] = t.id_step;
                 targetToStepMap[t.id_target] = t.id_step;
             });
 
-            // รวมยอดผลิตตาม id_step แยกตามออเดอร์
             aggregatedProduction = {};
             dailyProduction.forEach(dp => {
                 let orderId = dp.id_order;
@@ -598,36 +596,29 @@
                 }
             });
 
-            // ⚡ แสดงทุกขั้นตอนที่มีอยู่ในระบบตามปกติ แต่ทำการยุบรวมขั้นตอนชื่อซ้ำกันให้ไม่แสดงซ้ำซ้อน
-            let uniqueStepMap = new Map();
-            rawSteps.forEach(step => {
-                let stepName = (step.step_name || "").trim();
-                let lowerName = stepName.toLowerCase();
-                let isPack = lowerName.includes('แพ็ค') || lowerName.includes('packing');
-                
-                // ใช้ชื่อมาตรฐานสำหรับแพ็คกิ้งเพื่อรวมเป็นคอลัมน์เดียว
-                let cleanKey = isPack ? 'แพ็คกิ้ง' : stepName;
-
-                if (!uniqueStepMap.has(cleanKey)) {
-                    uniqueStepMap.set(cleanKey, {
-                        id_step: step.id_step,
-                        step_name: cleanKey
-                    });
-                }
-            });
-
-            allProductionSteps = Array.from(uniqueStepMap.values());
-
-            // จัดเรียงให้ขั้นตอนแพ็คกิ้งมาอยู่หน้าสุด
-            allProductionSteps.sort((a, b) => {
+            // ⚡ จัดเรียงลำดับคอลัมน์ขั้นตอนใหม่ตามความต้องการ:
+            // 1. แพ็คกิ้ง / แพ็ค (ขึ้นมาไว้หน้าสุด)
+            // 2. ขั้นตอนอื่นๆ ที่มีข้อมูลการผลิต (มียอดสะสม > 0)
+            // 3. ขั้นตอนที่ไม่มีข้อมูลเลย (ยอดเป็น 0 ทุกออเดอร์) ถูกผลักไปไว้ท้ายสุด
+            rawSteps.sort((a, b) => {
                 let nameA = (a.step_name || "").toLowerCase();
                 let nameB = (b.step_name || "").toLowerCase();
+                
                 let isPackA = nameA.includes('แพ็ค') || nameA.includes('packing');
                 let isPackB = nameB.includes('แพ็ค') || nameB.includes('packing');
                 if (isPackA && !isPackB) return -1;
                 if (!isPackA && isPackB) return 1;
-                return 0;
+
+                let hasDataA = Object.values(aggregatedProduction).some(ord => (ord[a.id_step] || 0) > 0);
+                let hasDataB = Object.values(aggregatedProduction).some(ord => (ord[b.id_step] || 0) > 0);
+
+                if (hasDataA && !hasDataB) return -1;
+                if (!hasDataA && hasDataB) return 1;
+
+                return a.id_step - b.id_step;
             });
+
+            allProductionSteps = rawSteps;
 
             if(isFirstLoad) {
                 renderTableHeader();
