@@ -577,12 +577,19 @@
             const dailyProduction = await dailyRes.json();
 
             workItems.forEach(w => workItemsMap[w.id_work] = w.work_code);
-            targets.forEach(t => targetToStepMap[t.id_target] = t.id_step);
 
+            // สร้าง Map เชื่อง id_target ไป id_step
+            let targetToStep = {};
+            targets.forEach(t => {
+                targetToStep[t.id_target] = t.id_step;
+                targetToStepMap[t.id_target] = t.id_step;
+            });
+
+            // รวมยอดผลิตตาม id_step โดยตรง เพื่อให้ขั้นตอนที่ชื่อเดียวกัน (เช่น แพ็คกิ้ง) รวมยอดเป็นช่องเดียวเป๊ะๆ
             aggregatedProduction = {};
             dailyProduction.forEach(dp => {
                 let orderId = dp.id_order;
-                let stepId = targetToStepMap[dp.id_target];
+                let stepId = targetToStep[dp.id_target];
 
                 if (orderId && stepId && dp.produced_amount) {
                     if (!aggregatedProduction[orderId]) aggregatedProduction[orderId] = {};
@@ -591,21 +598,33 @@
                 }
             });
 
-            // ⚡ กรองเฉพาะขั้นตอนที่มีการบันทึกข้อมูลผลิตจริง (ตัดขั้นตอนที่ไม่มีข้อมูลออก)
-            // แต่ยกเว้น "แพ็คกิ้ง/แพ็ค" ให้คงไว้แสดงผลเสมอตามต้องการ
-            allProductionSteps = rawSteps.filter(step => {
-                let stepName = (step.step_name || "").toLowerCase();
-                let isPack = stepName.includes('แพ็ค') || stepName.includes('packing');
-                if (isPack) return true;
+            // ⚡ กรองและยุบรวมขั้นตอนชื่อซ้ำกันออกให้เหลือขั้นตอนละ 1 อันเท่านั้น (และกรองเฉพาะที่มีข้อมูล หรือเป็นขั้นตอนแพ็คกิ้ง)
+            let uniqueStepMap = new Map();
+            rawSteps.forEach(step => {
+                let stepName = (step.step_name || "").trim();
+                let lowerName = stepName.toLowerCase();
+                let isPack = lowerName.includes('แพ็ค') || lowerName.includes('packing');
 
-                // ตรวจสอบว่ามีข้อมูลยอดผลิตในขั้นตอนนั้นๆ จริงไหม
+                // เช็คว่ามีข้อมูลผลิตใน step_id นี้ไหม
                 let hasData = Object.values(aggregatedProduction).some(orderSteps => {
                     return (orderSteps[step.id_step] || 0) > 0;
                 });
-                return hasData;
+
+                if (isPack || hasData) {
+                    // ใช้ชื่อขั้นตอนเป็น Key เพื่อป้องกันการแสดงผลซ้ำซ้อนถ้ามีหลาย ID ชื่อเดียวกัน
+                    let cleanKey = isPack ? 'แพ็คกิ้ง' : stepName;
+                    if (!uniqueStepMap.has(cleanKey)) {
+                        uniqueStepMap.set(cleanKey, {
+                            id_step: step.id_step, // ใช้ id_step ตัวแรกที่เจอ
+                            step_name: cleanKey
+                        });
+                    }
+                }
             });
 
-            // จัดเรียงให้ขั้นตอนแพ็คกิ้งขึ้นมาอยู่ด้านหน้าสุด
+            allProductionSteps = Array.from(uniqueStepMap.values());
+
+            // จัดเรียงให้ขั้นตอนแพ็คกิ้งขึ้นมาอยู่หน้าสุด
             allProductionSteps.sort((a, b) => {
                 let nameA = (a.step_name || "").toLowerCase();
                 let nameB = (b.step_name || "").toLowerCase();
