@@ -578,14 +578,14 @@
 
             workItems.forEach(w => workItemsMap[w.id_work] = w.work_code);
 
-            // สร้าง Map เชื่อง id_target ไป id_step
+            // แมป id_target ไป id_step
             let targetToStep = {};
             targets.forEach(t => {
                 targetToStep[t.id_target] = t.id_step;
                 targetToStepMap[t.id_target] = t.id_step;
             });
 
-            // รวมยอดผลิตตาม id_step โดยตรง เพื่อให้ขั้นตอนที่ชื่อเดียวกัน (เช่น แพ็คกิ้ง) รวมยอดเป็นช่องเดียวเป๊ะๆ
+            // รวมยอดผลิตตาม id_step แยกตามออเดอร์
             aggregatedProduction = {};
             dailyProduction.forEach(dp => {
                 let orderId = dp.id_order;
@@ -598,33 +598,27 @@
                 }
             });
 
-            // ⚡ กรองและยุบรวมขั้นตอนชื่อซ้ำกันออกให้เหลือขั้นตอนละ 1 อันเท่านั้น (และกรองเฉพาะที่มีข้อมูล หรือเป็นขั้นตอนแพ็คกิ้ง)
+            // ⚡ แสดงทุกขั้นตอนที่มีอยู่ในระบบตามปกติ แต่ทำการยุบรวมขั้นตอนชื่อซ้ำกันให้ไม่แสดงซ้ำซ้อน
             let uniqueStepMap = new Map();
             rawSteps.forEach(step => {
                 let stepName = (step.step_name || "").trim();
                 let lowerName = stepName.toLowerCase();
                 let isPack = lowerName.includes('แพ็ค') || lowerName.includes('packing');
+                
+                // ใช้ชื่อมาตรฐานสำหรับแพ็คกิ้งเพื่อรวมเป็นคอลัมน์เดียว
+                let cleanKey = isPack ? 'แพ็คกิ้ง' : stepName;
 
-                // เช็คว่ามีข้อมูลผลิตใน step_id นี้ไหม
-                let hasData = Object.values(aggregatedProduction).some(orderSteps => {
-                    return (orderSteps[step.id_step] || 0) > 0;
-                });
-
-                if (isPack || hasData) {
-                    // ใช้ชื่อขั้นตอนเป็น Key เพื่อป้องกันการแสดงผลซ้ำซ้อนถ้ามีหลาย ID ชื่อเดียวกัน
-                    let cleanKey = isPack ? 'แพ็คกิ้ง' : stepName;
-                    if (!uniqueStepMap.has(cleanKey)) {
-                        uniqueStepMap.set(cleanKey, {
-                            id_step: step.id_step, // ใช้ id_step ตัวแรกที่เจอ
-                            step_name: cleanKey
-                        });
-                    }
+                if (!uniqueStepMap.has(cleanKey)) {
+                    uniqueStepMap.set(cleanKey, {
+                        id_step: step.id_step,
+                        step_name: cleanKey
+                    });
                 }
             });
 
             allProductionSteps = Array.from(uniqueStepMap.values());
 
-            // จัดเรียงให้ขั้นตอนแพ็คกิ้งขึ้นมาอยู่หน้าสุด
+            // จัดเรียงให้ขั้นตอนแพ็คกิ้งมาอยู่หน้าสุด
             allProductionSteps.sort((a, b) => {
                 let nameA = (a.step_name || "").toLowerCase();
                 let nameB = (b.step_name || "").toLowerCase();
