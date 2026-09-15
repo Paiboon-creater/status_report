@@ -572,7 +572,7 @@
 
             allOrdersData = await ordersRes.json();
             const workItems = await workItemsRes.json();
-            allProductionSteps = await stepsRes.json(); 
+            let rawSteps = await stepsRes.json(); 
             const targets = await targetsRes.json();
             const dailyProduction = await dailyRes.json();
 
@@ -589,6 +589,31 @@
                     if (!aggregatedProduction[orderId][stepId]) aggregatedProduction[orderId][stepId] = 0;
                     aggregatedProduction[orderId][stepId] += dp.produced_amount;
                 }
+            });
+
+            // ⚡ กรองเฉพาะขั้นตอนที่มีการบันทึกข้อมูลผลิตจริง (ตัดขั้นตอนที่ไม่มีข้อมูลออก)
+            // แต่ยกเว้น "แพ็คกิ้ง/แพ็ค" ให้คงไว้แสดงผลเสมอตามต้องการ
+            allProductionSteps = rawSteps.filter(step => {
+                let stepName = (step.step_name || "").toLowerCase();
+                let isPack = stepName.includes('แพ็ค') || stepName.includes('packing');
+                if (isPack) return true;
+
+                // ตรวจสอบว่ามีข้อมูลยอดผลิตในขั้นตอนนั้นๆ จริงไหม
+                let hasData = Object.values(aggregatedProduction).some(orderSteps => {
+                    return (orderSteps[step.id_step] || 0) > 0;
+                });
+                return hasData;
+            });
+
+            // จัดเรียงให้ขั้นตอนแพ็คกิ้งขึ้นมาอยู่ด้านหน้าสุด
+            allProductionSteps.sort((a, b) => {
+                let nameA = (a.step_name || "").toLowerCase();
+                let nameB = (b.step_name || "").toLowerCase();
+                let isPackA = nameA.includes('แพ็ค') || nameA.includes('packing');
+                let isPackB = nameB.includes('แพ็ค') || nameB.includes('packing');
+                if (isPackA && !isPackB) return -1;
+                if (!isPackA && isPackB) return 1;
+                return 0;
             });
 
             if(isFirstLoad) {
@@ -705,33 +730,6 @@
 
     function renderTableHeader() {
         const thead = document.getElementById('reportTableHead');
-        
-        // ⚡ จัดเรียงขั้นตอนการผลิต: นำขั้นตอน "แพ็คกิ้ง" หรือ "แพ็ค" มาไว้ด้านหน้าสุด และกรองชื่อขั้นตอนที่ซ้ำกันออก
-        let seenNames = new Set();
-        let sortedSteps = [];
-        
-        // แยกขั้นตอนแพ็คกิ้งออกมาก่อน
-        let packSteps = allProductionSteps.filter(s => {
-            let name = (s.step_name || "").toLowerCase();
-            return name.includes('แพ็ค') || name.includes('packing');
-        });
-
-        let otherSteps = allProductionSteps.filter(s => {
-            let name = (s.step_name || "").toLowerCase();
-            return !name.includes('แพ็ค') && !name.includes('packing');
-        });
-
-        // รวมแพ็คกิ้งไว้กลุ่มแรก (เอาเฉพาะตัวที่ไม่ซ้ำชื่อกัน)
-        [...packSteps, ...otherSteps].forEach(step => {
-            let abbr = getStepAbbr(step.step_name);
-            if (!seenNames.has(abbr)) {
-                seenNames.add(abbr);
-                sortedSteps.push(step);
-            }
-        });
-
-        allProductionSteps = sortedSteps;
-
         let html = `
             <tr>
                 <th style="padding-left:15px;">เลขที่ใบสั่ง</th>
