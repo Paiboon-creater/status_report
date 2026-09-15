@@ -561,7 +561,8 @@
             }
 
             const [ordersRes, workItemsRes, stepsRes, targetsRes, dailyRes] = await Promise.all([
-                fetch(`${SUPABASE_URL}/orders?select=*&order=order_no.asc`, { headers, cache: 'no-store' }),
+                // ⚡ เรียงลำดับคำสั่งซื้อตั้งต้นจากฐานข้อมูลตามวันกำหนดเสร็จ (วันที่น้อย/ใกล้สุดขึ้นก่อน)
+                fetch(`${SUPABASE_URL}/orders?select=*&order=end_date.asc`, { headers, cache: 'no-store' }),
                 fetch(`${SUPABASE_URL}/work_items?select=id_work,work_code`, { headers, cache: 'no-store' }),
                 fetch(`${SUPABASE_URL}/production_steps?select=id_step,step_name&order=id_step.asc`, { headers, cache: 'no-store' }),
                 fetch(`${SUPABASE_URL}/targets?select=id_target,id_step`, { headers, cache: 'no-store' }),
@@ -596,45 +597,38 @@
                 }
             });
 
-            // ⚡ จัดการยุบรวมขั้นตอนชื่อเดียวกัน (เช่น แพ็คกิ้ง ที่มีหลาย id_step) ให้เหลือเพียง 1 อันตัวแทน
-            let stepNameMap = new Map();
+            // ⚡ รวมกลุ่มชื่อขั้นตอนที่ซ้ำกันให้เป็นอันเดียวกัน (เช่น แพ็คกิ้ง)
+            let uniqueStepMap = new Map();
+            
             rawSteps.forEach(step => {
                 let name = (step.step_name || "").trim();
                 let lower = name.toLowerCase();
                 let isPack = lower.includes('แพ็ค') || lower.includes('packing');
-                let canonicalName = isPack ? 'แพ็คกิ้ง' : name;
+                let canonicalKey = isPack ? 'แพ็คกิ้ง' : name;
 
-                if (!stepNameMap.has(canonicalName)) {
-                    stepNameMap.set(canonicalName, {
-                        step_name: canonicalName,
-                        ids: [step.id_step]
+                if (!uniqueStepMap.has(canonicalKey)) {
+                    uniqueStepMap.set(canonicalKey, {
+                        step_name: canonicalKey,
+                        ids: [step.id_step],
+                        hasData: false
                     });
                 } else {
-                    stepNameMap.get(canonicalName).ids.push(step.id_step);
+                    uniqueStepMap.get(canonicalKey).ids.push(step.id_step);
                 }
             });
 
-            // แปลงกลับเป็นอาร์เรย์ขั้นตอนเพื่อใช้แสดงผล (โดยรวมยอดทุก id_step ที่ชื่อเดียวกันเข้าด้วยกัน)
-            let processedSteps = [];
-            stepNameMap.forEach((val, key) => {
-                // เช็คว่ากลุ่มนี้มีข้อมูลการผลิตรวมกันมากกว่า 0 ไหม
+            uniqueStepMap.forEach((val, key) => {
                 let hasData = false;
                 val.ids.forEach(id => {
-                    let sumProd = Object.values(aggregatedProduction).reduce((acc, ord) => acc + (ord[id] || 0), 0);
-                    if (sumProd > 0) hasData = true;
+                    let totalQty = Object.values(aggregatedProduction).reduce((acc, ord) => acc + (ord[id] || 0), 0);
+                    if (totalQty > 0) hasData = true;
                 });
-
-                processedSteps.push({
-                    step_name: key,
-                    ids: val.ids,
-                    hasData: hasData
-                });
+                val.hasData = hasData;
             });
 
-            // ⚡ จัดลำดับความสำคัญคอลัมน์:
-            // 1. แพ็คกิ้ง (ขึ้นมาไว้หน้าสุดเสมอ)
-            // 2. ขั้นตอนอื่นๆ ที่มีข้อมูลการผลิต (hasData === true)
-            // 3. ขั้นตอนที่ไม่มีข้อมูลเลย (hasData === false) ถูกผลักไปไว้ท้ายสุด
+            let processedSteps = Array.from(uniqueStepMap.values());
+
+            // ⚡ จัดเรียงลำดับคอลัมน์ขั้นตอน: 1. แพ็คกิ้ง (หน้าสุด) -> 2. ขั้นตอนอื่นที่มีข้อมูล -> 3. ขั้นตอนที่ไม่มีข้อมูล
             processedSteps.sort((a, b) => {
                 let isPackA = a.step_name === 'แพ็คกิ้ง';
                 let isPackB = b.step_name === 'แพ็คกิ้ง';
@@ -727,6 +721,13 @@
             let matchWork = !workVal || safeWorkCode === workVal;
             
             return matchPo && matchWork;
+        });
+
+        // ⚡ จัดเรียงข้อมูลที่กรองแล้วตาม "วันกำหนดเสร็จ" (end_date) วันที่น้อยกว่าอยู่บน
+        filtered.sort((a, b) => {
+            let dateA = a.end_date ? new Date(a.end_date) : new Date('9999-12-31');
+            let dateB = b.end_date ? new Date(b.end_date) : new Date('9999-12-31');
+            return dateA - dateB;
         });
 
         renderTable(filtered);
@@ -832,7 +833,6 @@
             `;
 
             allProductionSteps.forEach(step => {
-                // รวมยอดผลิตจากทุก id_step ที่อยู่ในกลุ่มชื่อเดียวกัน
                 let qty = 0;
                 step.ids.forEach(id => {
                     qty += (prodBySteps[id] || 0);
