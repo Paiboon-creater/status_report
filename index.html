@@ -596,29 +596,58 @@
                 }
             });
 
-            // ⚡ จัดเรียงลำดับคอลัมน์ขั้นตอนใหม่ตามความต้องการ:
-            // 1. แพ็คกิ้ง / แพ็ค (ขึ้นมาไว้หน้าสุด)
-            // 2. ขั้นตอนอื่นๆ ที่มีข้อมูลการผลิต (มียอดสะสม > 0)
-            // 3. ขั้นตอนที่ไม่มีข้อมูลเลย (ยอดเป็น 0 ทุกออเดอร์) ถูกผลักไปไว้ท้ายสุด
-            rawSteps.sort((a, b) => {
-                let nameA = (a.step_name || "").toLowerCase();
-                let nameB = (b.step_name || "").toLowerCase();
-                
-                let isPackA = nameA.includes('แพ็ค') || nameA.includes('packing');
-                let isPackB = nameB.includes('แพ็ค') || nameB.includes('packing');
+            // ⚡ จัดการยุบรวมขั้นตอนชื่อเดียวกัน (เช่น แพ็คกิ้ง ที่มีหลาย id_step) ให้เหลือเพียง 1 อันตัวแทน
+            let stepNameMap = new Map();
+            rawSteps.forEach(step => {
+                let name = (step.step_name || "").trim();
+                let lower = name.toLowerCase();
+                let isPack = lower.includes('แพ็ค') || lower.includes('packing');
+                let canonicalName = isPack ? 'แพ็คกิ้ง' : name;
+
+                if (!stepNameMap.has(canonicalName)) {
+                    stepNameMap.set(canonicalName, {
+                        step_name: canonicalName,
+                        ids: [step.id_step]
+                    });
+                } else {
+                    stepNameMap.get(canonicalName).ids.push(step.id_step);
+                }
+            });
+
+            // แปลงกลับเป็นอาร์เรย์ขั้นตอนเพื่อใช้แสดงผล (โดยรวมยอดทุก id_step ที่ชื่อเดียวกันเข้าด้วยกัน)
+            let processedSteps = [];
+            stepNameMap.forEach((val, key) => {
+                // เช็คว่ากลุ่มนี้มีข้อมูลการผลิตรวมกันมากกว่า 0 ไหม
+                let hasData = false;
+                val.ids.forEach(id => {
+                    let sumProd = Object.values(aggregatedProduction).reduce((acc, ord) => acc + (ord[id] || 0), 0);
+                    if (sumProd > 0) hasData = true;
+                });
+
+                processedSteps.push({
+                    step_name: key,
+                    ids: val.ids,
+                    hasData: hasData
+                });
+            });
+
+            // ⚡ จัดลำดับความสำคัญคอลัมน์:
+            // 1. แพ็คกิ้ง (ขึ้นมาไว้หน้าสุดเสมอ)
+            // 2. ขั้นตอนอื่นๆ ที่มีข้อมูลการผลิต (hasData === true)
+            // 3. ขั้นตอนที่ไม่มีข้อมูลเลย (hasData === false) ถูกผลักไปไว้ท้ายสุด
+            processedSteps.sort((a, b) => {
+                let isPackA = a.step_name === 'แพ็คกิ้ง';
+                let isPackB = b.step_name === 'แพ็คกิ้ง';
                 if (isPackA && !isPackB) return -1;
                 if (!isPackA && isPackB) return 1;
 
-                let hasDataA = Object.values(aggregatedProduction).some(ord => (ord[a.id_step] || 0) > 0);
-                let hasDataB = Object.values(aggregatedProduction).some(ord => (ord[b.id_step] || 0) > 0);
+                if (a.hasData && !b.hasData) return -1;
+                if (!a.hasData && b.hasData) return 1;
 
-                if (hasDataA && !hasDataB) return -1;
-                if (!hasDataA && hasDataB) return 1;
-
-                return a.id_step - b.id_step;
+                return 0;
             });
 
-            allProductionSteps = rawSteps;
+            allProductionSteps = processedSteps;
 
             if(isFirstLoad) {
                 renderTableHeader();
@@ -803,7 +832,12 @@
             `;
 
             allProductionSteps.forEach(step => {
-                let qty = prodBySteps[step.id_step] || 0;
+                // รวมยอดผลิตจากทุก id_step ที่อยู่ในกลุ่มชื่อเดียวกัน
+                let qty = 0;
+                step.ids.forEach(id => {
+                    qty += (prodBySteps[id] || 0);
+                });
+
                 let pct = calculatePercentage(qty, orderQty);
                 
                 rowHtml += `<td class="text-center-col ${getPercentageClass(pct)}">${pct !== '-' ? pct + '%' : '-'}</td>`;
