@@ -469,6 +469,9 @@
             allOrdersData = await ordersRes.json();
             const workItems = await workItemsRes.json();
             rawStepsData = await stepsRes.json(); 
+            // เรียงลำดับ rawStepsData ตาม id_step (Level ของขั้นตอนการผลิต) จากน้อยไปมาก
+            rawStepsData.sort((a, b) => a.id_step - b.id_step);
+
             allTargetsData = await targetsRes.json();
             const dailyProduction = await dailyRes.json();
 
@@ -539,7 +542,7 @@
                     <p class="mb-1"><b>วันกำหนดเสร็จ:</b> ${endDate}</p>
                 </div>
             </div>
-            <h5 class="border-bottom pb-2">ประวัติและสถานะการผลิตรายขั้นตอน (เฉพาะขั้นตอนที่มีการผลิต)</h5>
+            <h5 class="border-bottom pb-2">ประวัติและสถานะการผลิตรายขั้นตอน (เรียงตามลำดับ Level)</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-striped align-middle">
                     <thead class="table-light">
@@ -553,7 +556,7 @@
                     <tbody>
         `;
 
-        // กรองเฉพาะขั้นตอนที่มีการผลิตสะสมมากกว่า 0
+        // กรองเฉพาะขั้นตอนที่มีการผลิตสะสมมากกว่า 0 และแสดงเรียงตามลำดับ Level (rawStepsData ถูก sort มาแล้ว)
         let hasActiveSteps = false;
         rawStepsData.forEach(step => {
             let stepProduced = 0;
