@@ -172,7 +172,7 @@
 
         .filter-group {
             flex: 1;
-            min-width: 150px;
+            min-width: 180px;
         }
 
         .filter-group label {
@@ -182,6 +182,94 @@
             margin-bottom: 6px;
             font-weight: bold;
         }
+
+        /* --- Smart Dropdown Custom Style --- */
+        .smart-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .smart-select-input {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-neon);
+            color: var(--input-text);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            padding: 8px 30px 8px 12px;
+            width: 100%;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        .smart-select-input:focus {
+            background-color: #ffffff;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        .smart-select-arrow {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: transform 0.2s ease;
+        }
+
+        .smart-select-container.open .smart-select-arrow {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .smart-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 220px;
+            overflow-y: auto;
+            background-color: #ffffff;
+            border: 1px solid var(--border-neon);
+            border-radius: 6px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            z-index: 1050;
+            margin-top: 4px;
+            display: none;
+            padding: 0;
+            list-style: none;
+        }
+
+        .smart-select-dropdown.show {
+            display: block;
+        }
+
+        .smart-select-item {
+            padding: 9px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-dim);
+            transition: background 0.15s;
+        }
+
+        .smart-select-item:last-child {
+            border-bottom: none;
+        }
+
+        .smart-select-item:hover, .smart-select-item.selected {
+            background-color: #e0f2fe;
+            color: var(--neon-blue);
+            font-weight: bold;
+        }
+
+        .smart-select-item.empty {
+            color: var(--text-muted);
+            text-align: center;
+            cursor: default;
+        }
+        /* ---------------------------------- */
 
         .form-select-stock {
             background-color: var(--input-bg);
@@ -336,18 +424,26 @@
 
     <div class="filter-panel">
         <div class="filter-controls-group">
+            <!-- Smart Select PO_No -->
             <div class="filter-group">
                 <label>PO_No:</label>
-                <select id="filter_po" class="form-select-stock" onchange="applyFilters()">
-                    <option value="">-- ทุก PO_No --</option>
-                </select>
+                <div class="smart-select-container" id="container_po">
+                    <input type="text" id="filter_po" class="smart-select-input" placeholder="พิมพ์หรือเลือก PO..." autocomplete="off">
+                    <i class="fa-solid fa-chevron-down smart-select-arrow"></i>
+                    <ul class="smart-select-dropdown" id="dropdown_po"></ul>
+                </div>
             </div>
+
+            <!-- Smart Select รหัสสินค้า -->
             <div class="filter-group">
                 <label>รหัสสินค้า:</label>
-                <select id="filter_work" class="form-select-stock" onchange="applyFilters()">
-                    <option value="">-- ทุกรหัสสินค้า --</option>
-                </select>
+                <div class="smart-select-container" id="container_work">
+                    <input type="text" id="filter_work" class="smart-select-input" placeholder="พิมพ์หรือเลือกรหัส..." autocomplete="off">
+                    <i class="fa-solid fa-chevron-down smart-select-arrow"></i>
+                    <ul class="smart-select-dropdown" id="dropdown_work"></ul>
+                </div>
             </div>
+
             <div class="filter-group" style="min-width: 100px; max-width: 140px;">
                 <label>ตรึงคอลัมน์:</label>
                 <select id="freeze_col" class="form-select-stock" onchange="updateStickyColumns()">
@@ -359,6 +455,7 @@
                     <option value="5">5 คอลัมน์</option>
                 </select>
             </div>
+            
             <div style="display: flex; align-items: flex-end; gap: 15px;">
                 <button class="clear-btn" onclick="clearFilters()">ล้างตัวกรอง</button>
                 <div class="form-check form-switch ms-2 pb-2">
@@ -416,7 +513,7 @@
 
         <h5>4. การกรองและการส่งออกข้อมูล</h5>
         <ul>
-            <li>ใช้ช่อง <b>PO_No</b> หรือ <b>รหัสสินค้า</b> เพื่อค้นหาเฉพาะรายการที่ต้องการ</li>
+            <li>ใช้ช่อง <b>PO_No</b> หรือ <b>รหัสสินค้า</b> พิมพ์หรือเลือกรายการเพื่อค้นหาเฉพาะรายการที่ต้องการ</li>
             <li>กดปุ่ม <b>ดาวน์โหลด EXCEL</b> เพื่อนำข้อมูลทั้งหมดที่แสดงอยู่บนตารางในขณะนั้น ออกไปเป็นไฟล์ .xlsx ทันที</li>
         </ul>
 
@@ -459,8 +556,13 @@
     let aggregatedProduction = {}; 
     let isFirstLoad = true;
 
+    // ข้อมูลตัวเลือกสำหรับ Smart Dropdown
+    let uniquePOsList = [];
+    let uniqueWorksList = [];
+
     window.onload = async function() {
         updateStickyColumns();
+        setupSmartSelects();
         
         await fetchAllData();
         
@@ -561,7 +663,6 @@
             }
 
             const [ordersRes, workItemsRes, stepsRes, targetsRes, dailyRes] = await Promise.all([
-                // ⚡ เรียงลำดับคำสั่งซื้อตั้งต้นจากฐานข้อมูลตามวันกำหนดเสร็จ (วันที่น้อย/ใกล้สุดขึ้นก่อน)
                 fetch(`${SUPABASE_URL}/orders?select=*&order=end_date.asc`, { headers, cache: 'no-store' }),
                 fetch(`${SUPABASE_URL}/work_items?select=id_work,work_code`, { headers, cache: 'no-store' }),
                 fetch(`${SUPABASE_URL}/production_steps?select=id_step,step_name&order=id_step.asc`, { headers, cache: 'no-store' }),
@@ -597,7 +698,6 @@
                 }
             });
 
-            // ⚡ รวมกลุ่มชื่อขั้นตอนที่ซ้ำกันให้เป็นอันเดียวกัน (เช่น แพ็คกิ้ง)
             let uniqueStepMap = new Map();
             
             rawSteps.forEach(step => {
@@ -628,7 +728,6 @@
 
             let processedSteps = Array.from(uniqueStepMap.values());
 
-            // ⚡ จัดเรียงลำดับคอลัมน์ขั้นตอน: 1. แพ็คกิ้ง (หน้าสุด) -> 2. ขั้นตอนอื่นที่มีข้อมูล -> 3. ขั้นตอนที่ไม่มีข้อมูล
             processedSteps.sort((a, b) => {
                 let isPackA = a.step_name === 'แพ็คกิ้ง';
                 let isPackB = b.step_name === 'แพ็คกิ้ง';
@@ -660,39 +759,79 @@
         }
     }
 
-    function populateDropdowns(poFilter = '', workFilter = '') {
-        const poSelect = document.getElementById('filter_po');
-        const workSelect = document.getElementById('filter_work');
+    /* --- ระบบ Smart Select Controller --- */
+    function setupSmartSelects() {
+        const setupInstance = (inputId, dropdownId, containerId, getItemsFn) => {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            const container = document.getElementById(containerId);
 
+            const renderItems = (filterText = '') => {
+                dropdown.innerHTML = '';
+                const items = getItemsFn();
+                const filtered = items.filter(item => 
+                    item.toLowerCase().includes(filterText.toLowerCase().trim())
+                );
+
+                if (filtered.length === 0) {
+                    dropdown.innerHTML = '<li class="smart-select-item empty">ไม่พบข้อมูลที่ตรงกัน</li>';
+                    return;
+                }
+
+                filtered.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = `smart-select-item ${item === input.value.trim() ? 'selected' : ''}`;
+                    li.textContent = item;
+                    li.addEventListener('click', () => {
+                        input.value = item;
+                        dropdown.classList.remove('show');
+                        container.classList.remove('open');
+                        applyFilters();
+                    });
+                    dropdown.appendChild(li);
+                });
+            };
+
+            input.addEventListener('focus', () => {
+                renderItems(input.value);
+                dropdown.classList.add('show');
+                container.classList.add('open');
+            });
+
+            input.addEventListener('input', (e) => {
+                renderItems(e.target.value);
+                dropdown.classList.add('show');
+                container.classList.add('open');
+                applyFilters();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                    container.classList.remove('open');
+                }
+            });
+        };
+
+        setupInstance('filter_po', 'dropdown_po', 'container_po', () => uniquePOsList);
+        setupInstance('filter_work', 'dropdown_work', 'container_work', () => uniqueWorksList);
+    }
+
+    function populateDropdowns(poFilter = '', workFilter = '') {
         const safeTrim = (val) => val ? String(val).trim() : '';
 
         const validForPo = allOrdersData.filter(item => {
             let safeWorkCode = safeTrim(workItemsMap[item.id_work] || item.id_work);
-            return (!workFilter || safeWorkCode === workFilter);
+            return (!workFilter || safeWorkCode.toLowerCase() === workFilter.toLowerCase());
         });
 
         const validForWork = allOrdersData.filter(item => {
             let safePoNo = safeTrim(item.po_no);
-            return (!poFilter || safePoNo === poFilter);
+            return (!poFilter || safePoNo.toLowerCase() === poFilter.toLowerCase());
         });
 
-        const uniquePOs = [...new Set(validForPo.map(i => safeTrim(i.po_no)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
-        const uniqueWorks = [...new Set(validForWork.map(i => safeTrim(workItemsMap[i.id_work] || i.id_work)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
-
-        const currPo = poSelect.value;
-        const currWork = workSelect.value;
-
-        poSelect.innerHTML = '<option value="">-- ทุก PO_No --</option>';
-        uniquePOs.forEach(po => {
-            let selected = (po === currPo) ? 'selected' : '';
-            poSelect.innerHTML += `<option value="${po}" ${selected}>${po}</option>`;
-        });
-
-        workSelect.innerHTML = '<option value="">-- ทุกรหัสสินค้า --</option>';
-        uniqueWorks.forEach(w => {
-            let selected = (w === currWork) ? 'selected' : '';
-            workSelect.innerHTML += `<option value="${w}" ${selected}>${w}</option>`;
-        });
+        uniquePOsList = [...new Set(validForPo.map(i => safeTrim(i.po_no)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
+        uniqueWorksList = [...new Set(validForWork.map(i => safeTrim(workItemsMap[i.id_work] || i.id_work)).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'th', {numeric: true}));
     }
 
     function toggleHideOrder(orderNo, isChecked) {
@@ -707,8 +846,8 @@
     }
 
     function applyFilters() {
-        const poVal = document.getElementById('filter_po').value;
-        const workVal = document.getElementById('filter_work').value;
+        const poVal = document.getElementById('filter_po').value.trim();
+        const workVal = document.getElementById('filter_work').value.trim();
         
         populateDropdowns(poVal, workVal);
 
@@ -717,13 +856,12 @@
             let rawWorkCode = workItemsMap[item.id_work] || item.id_work || '';
             let safeWorkCode = String(rawWorkCode).trim();
 
-            let matchPo = !poVal || safePoNo === poVal;
-            let matchWork = !workVal || safeWorkCode === workVal;
+            let matchPo = !poVal || safePoNo.toLowerCase().includes(poVal.toLowerCase());
+            let matchWork = !workVal || safeWorkCode.toLowerCase().includes(workVal.toLowerCase());
             
             return matchPo && matchWork;
         });
 
-        // ⚡ จัดเรียงข้อมูลที่กรองแล้วตาม "วันกำหนดเสร็จ" (end_date) วันที่น้อยกว่าอยู่บน
         filtered.sort((a, b) => {
             let dateA = a.end_date ? new Date(a.end_date) : new Date('9999-12-31');
             let dateB = b.end_date ? new Date(b.end_date) : new Date('9999-12-31');
@@ -801,64 +939,62 @@
         data.forEach(order => {
             let safeOrderNo = order.order_no ? String(order.order_no).trim() : '-';
             let isHidden = hiddenOrders.includes(safeOrderNo);
-            
-            if (isHidden && !showHiddenItems) {
-                return;
+
+            if (isHidden && !showHiddenItems) return;
+
+            let safeWorkCode = workItemsMap[order.id_work] || order.id_work || '-';
+            let safePoNo = order.po_no ? String(order.po_no).trim() : '-';
+            let orderQty = order.order_qty || 0;
+
+            let formattedEndDate = '-';
+            if (order.end_date) {
+                let d = new Date(order.end_date);
+                if (!isNaN(d.getTime())) {
+                    formattedEndDate = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                }
             }
 
-            let workCode = workItemsMap[order.id_work] || order.id_work || '-';
-            let orderQty = order.quantity || 0;
-            let prodBySteps = aggregatedProduction[order.id_order] || {};
-            
-            let tr = document.createElement('tr');
-            
-            if (isHidden) {
-                tr.style.opacity = "0.45"; 
-            }
-            
-            let rowHtml = `
+            let rowStyle = isHidden ? 'opacity: 0.45; background-color: #f1f5f9;' : '';
+            let checkedState = isHidden ? 'checked' : '';
+
+            let trHtml = `<tr style="${rowStyle}">
                 <td style="padding-left:15px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <input type="checkbox" class="theme-checkbox" ${isHidden ? 'checked' : ''} onchange="toggleHideOrder('${safeOrderNo}', this.checked)" title="ติ๊กเพื่อซ่อน/เลิกซ่อน">
-                        
-                        <a href="https://paiboon-creater.github.io/scandal_report/?order=${safeOrderNo}" target="_blank" class="fw-bold" style="${isHidden ? 'text-decoration: line-through; color: #94a3b8 !important;' : 'text-decoration: underline; color: #0284c7; cursor: pointer;'}">
-                            ${safeOrderNo} <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size: 0.75em;"></i>
-                        </a>
-                    </div>
+                    <input type="checkbox" class="theme-checkbox me-2" ${checkedState} onchange="toggleHideOrder('${safeOrderNo}', this.checked)">
+                    <span class="fw-bold">${safeOrderNo}</span>
                 </td>
-                <td style="color: #0369a1; font-weight: 500;">${workCode}</td>
-                <td style="color: #475569;">${order.po_no || '-'}</td>
-                <td class="text-right-col fw-bold" style="color: #1e293b;">${formatNumber(orderQty)}</td>
-                <td style="color: #475569;">${order.end_date || '-'}</td>
+                <td>${safeWorkCode}</td>
+                <td>${safePoNo}</td>
+                <td class="text-right-col fw-bold">${formatNumber(orderQty)}</td>
+                <td>${formattedEndDate}</td>
             `;
 
             allProductionSteps.forEach(step => {
-                let qty = 0;
+                let producedSum = 0;
                 step.ids.forEach(id => {
-                    qty += (prodBySteps[id] || 0);
+                    if (aggregatedProduction[order.id_order] && aggregatedProduction[order.id_order][id]) {
+                        producedSum += aggregatedProduction[order.id_order][id];
+                    }
                 });
 
-                let pct = calculatePercentage(qty, orderQty);
-                
-                rowHtml += `<td class="text-center-col ${getPercentageClass(pct)}">${pct !== '-' ? pct + '%' : '-'}</td>`;
-                rowHtml += `<td class="text-right-col" style="color: #334155;">${formatNumber(qty)}</td>`;
+                let pct = calculatePercentage(producedSum, orderQty);
+                let bgClass = getPercentageClass(pct);
+
+                trHtml += `
+                    <td class="text-center-col ${bgClass}">${pct !== '-' ? pct + '%' : '-'}</td>
+                    <td class="text-right-col">${formatNumber(producedSum)}</td>
+                `;
             });
 
-            tr.innerHTML = rowHtml;
-            tbody.appendChild(tr);
+            trHtml += `</tr>`;
+            tbody.innerHTML += trHtml;
         });
-        
-        if (tbody.children.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${totalColumns}" class="text-center text-muted py-4" style="position:static;">ไม่มีข้อมูล (รายการอาจถูกติ๊กซ่อนไว้ทั้งหมด ลองเปิดสวิตช์แสดงรายการที่ซ่อนดูนะครับ)</td></tr>`;
-        }
     }
 
     function exportToExcel() {
-        let table = document.getElementById('statusReportTable');
-        let wb = XLSX.utils.table_to_book(table, { sheet: "Status Report" });
-        XLSX.writeFile(wb, "Jaguar_Production_Status_Report.xlsx");
+        const table = document.getElementById('statusReportTable');
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Status Report" });
+        XLSX.writeFile(wb, `Jaguar_Production_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 </script>
-
 </body>
 </html>
