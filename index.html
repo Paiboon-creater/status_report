@@ -539,7 +539,7 @@
                     <p class="mb-1"><b>วันกำหนดเสร็จ:</b> ${endDate}</p>
                 </div>
             </div>
-            <h5 class="border-bottom pb-2">ประวัติและสถานะการผลิตรายขั้นตอน</h5>
+            <h5 class="border-bottom pb-2">ประวัติและสถานะการผลิตรายขั้นตอน (เฉพาะขั้นตอนที่มีการผลิต)</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-striped align-middle">
                     <thead class="table-light">
@@ -553,30 +553,35 @@
                     <tbody>
         `;
 
+        // กรองเฉพาะขั้นตอนที่มีการผลิตสะสมมากกว่า 0
+        let hasActiveSteps = false;
         rawStepsData.forEach(step => {
             let stepProduced = 0;
             if (aggregatedProduction[order.id_order] && aggregatedProduction[order.id_order][step.id_step]) {
                 stepProduced = aggregatedProduction[order.id_order][step.id_step];
             }
-            let pct = (orderQty > 0 && stepProduced > 0) ? ((stepProduced / orderQty) * 100).toFixed(1) : '-';
-            let numPct = parseFloat(pct);
-            let badgeClass = 'bg-secondary';
-            if (!isNaN(numPct)) {
-                if (numPct >= 100) badgeClass = 'bg-success';
-                else if (numPct >= 75) badgeClass = 'bg-warning text-dark';
-                else if (numPct >= 30) badgeClass = 'bg-info text-dark';
-                else badgeClass = 'bg-danger';
-            }
 
-            html += `
-                <tr>
-                    <td><b>${step.step_name}</b></td>
-                    <td class="text-end fw-bold">${stepProduced.toLocaleString()}</td>
-                    <td class="text-center fw-bold">${pct !== '-' ? pct + '%' : '-'}</td>
-                    <td class="text-center"><span class="badge ${badgeClass}">${pct !== '-' ? (numPct >= 100 ? 'เสร็จสมบูรณ์' : 'กำลังดำเนินการ') : 'ยังไม่เริ่ม'}</span></td>
-                </tr>
-            `;
+            if (stepProduced > 0) {
+                hasActiveSteps = true;
+                let pct = (orderQty > 0) ? ((stepProduced / orderQty) * 100).toFixed(1) : '0.0';
+                let numPct = parseFloat(pct);
+                let badgeClass = numPct >= 100 ? 'bg-success' : (numPct >= 75 ? 'bg-warning text-dark' : (numPct >= 30 ? 'bg-info text-dark' : 'bg-danger'));
+                let statusText = numPct >= 100 ? 'เสร็จสมบูรณ์' : 'กำลังดำเนินการ';
+
+                html += `
+                    <tr>
+                        <td><b>${step.step_name}</b></td>
+                        <td class="text-end fw-bold">${stepProduced.toLocaleString()}</td>
+                        <td class="text-center fw-bold">${pct}%</td>
+                        <td class="text-center"><span class="badge ${badgeClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            }
         });
+
+        if (!hasActiveSteps) {
+            html += `<tr><td colspan="4" class="text-center text-muted py-3">ยังไม่มีประวัติการบันทึกการผลิตในใบสั่งนี้</td></tr>`;
+        }
 
         html += `</tbody></table></div>`;
         document.getElementById('previewContentBody').innerHTML = html;
