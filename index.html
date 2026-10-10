@@ -298,6 +298,19 @@
             padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px;
         }
         .close-modal-btn:hover { background: var(--neon-red); color: #fff; }
+
+        /* Styles for Drag and Drop */
+        .draggable-col {
+            cursor: grab;
+            user-select: none;
+        }
+        .draggable-col:active {
+            cursor: grabbing;
+        }
+        .drag-over {
+            background-color: #e2e8f0 !important;
+            border-left: 3px dashed var(--neon-blue) !important;
+        }
     </style>
     
     <style id="dynamic-sticky-style"></style>
@@ -405,6 +418,7 @@
     let allOrdersData = [];
     let workItemsMap = {};
     let allProductionSteps = []; 
+    let tableColumns = []; // ตัวแปรจัดเก็บโครงสร้างคอลัมน์สำหรับการลากสลับ
     let targetToStepMap = {}; 
     let aggregatedProduction = {}; 
     let rawStepsData = [];
@@ -466,7 +480,11 @@
 
             if (!ordersRes.ok) throw new Error("Connection failed");
 
-            allOrdersData = await ordersRes.json();
+            let fetchedOrders = await ordersRes.json();
+            
+            // กรองข้อมูลเฉพาะบิลที่ยังไม่ปิด (is_closed เป็น false หรือ null)
+            allOrdersData = fetchedOrders.filter(order => !order.is_closed || String(order.is_closed).toLowerCase() === 'false');
+
             const workItems = await workItemsRes.json();
             rawStepsData = await stepsRes.json(); 
             // เรียงลำดับ rawStepsData ตาม id_step (Level ของขั้นตอนการผลิต) จากน้อยไปมาก
@@ -507,6 +525,7 @@
             allProductionSteps = Array.from(uniqueStepMap.values());
 
             if(isFirstLoad) {
+                initTableColumns();
                 renderTableHeader();
                 isFirstLoad = false;
             }
@@ -518,6 +537,76 @@
             console.error(error);
             document.getElementById('syncStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-danger"></i> DISCONNECTED';
         }
+    }
+
+    // ฟังก์ชันสร้างโครงสร้างคอลัมน์ครั้งแรกสุด (เพื่อใช้สำหรับการลากสลับตำแหน่ง)
+    function initTableColumns() {
+        tableColumns = [
+            { id: 'order_no', label: 'เลขที่ใบสั่ง', type: 'base' },
+            { id: 'work_code', label: 'รหัสสินค้า', type: 'base' },
+            { id: 'po_no', label: 'PO_NO', type: 'base' },
+            { id: 'quantity', label: 'ยอดสั่งผลิต', type: 'base' },
+            { id: 'end_date', label: 'วันกำหนดเสร็จ', type: 'base' }
+        ];
+
+        allProductionSteps.forEach(step => {
+            tableColumns.push({ id: `pct_${step.step_name}`, label: `%${step.step_name}`, type: 'pct', stepData: step });
+            tableColumns.push({ id: `qty_${step.step_name}`, label: `ยอด${step.step_name}`, type: 'qty', stepData: step });
+        });
+    }
+
+    // ฟังก์ชันติดตั้งระบบ Drag & Drop สลับคอลัมน์
+    function setupDragAndDrop() {
+        const headers = document.querySelectorAll('.draggable-col');
+        let dragSrcIndex = -1;
+
+        headers.forEach(header => {
+            header.addEventListener('dragstart', function(e) {
+                dragSrcIndex = parseInt(this.getAttribute('data-index'));
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', dragSrcIndex);
+                this.style.opacity = '0.4';
+            });
+
+            header.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                this.classList.add('drag-over');
+                return false;
+            });
+
+            header.addEventListener('dragenter', function(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+
+            header.addEventListener('dragleave', function(e) {
+                this.classList.remove('drag-over');
+            });
+
+            header.addEventListener('drop', function(e) {
+                e.stopPropagation();
+                this.classList.remove('drag-over');
+                let targetIndex = parseInt(this.getAttribute('data-index'));
+                
+                if (dragSrcIndex !== targetIndex && dragSrcIndex !== -1) {
+                    // สลับตำแหน่งข้อมูลคอลัมน์ใน Array หลัก
+                    const movedItem = tableColumns.splice(dragSrcIndex, 1)[0];
+                    tableColumns.splice(targetIndex, 0, movedItem);
+                    
+                    // สั่ง Render ตารางใหม่ทั้งหมดตามการเรียงคอลัมน์ใหม่
+                    renderTableHeader();
+                    applyFilters();
+                    updateStickyColumns();
+                }
+                return false;
+            });
+
+            header.addEventListener('dragend', function(e) {
+                this.style.opacity = '1';
+                headers.forEach(h => h.classList.remove('drag-over'));
+            });
+        });
     }
 
     function openOrderPreview(orderId) {
@@ -556,7 +645,6 @@
                     <tbody>
         `;
 
-        // กรองเฉพาะขั้นตอนที่มีการผลิตสะสมมากกว่า 0 และแสดงเรียงตามลำดับ Level (rawStepsData ถูก sort มาแล้ว)
         let hasActiveSteps = false;
         rawStepsData.forEach(step => {
             let stepProduced = 0;
@@ -661,12 +749,24 @@
 
     function renderTableHeader() {
         const thead = document.getElementById('reportTableHead');
-        let html = `<tr><th style="padding-left:15px;">เลขที่ใบสั่ง</th><th>รหัสสินค้า</th><th>PO_NO</th><th class="text-right-col">ยอดสั่งผลิต</th><th>วันกำหนดเสร็จ</th>`;
-        allProductionSteps.forEach(step => {
-            html += `<th class="text-center-col">%${step.step_name}</th><th class="text-right-col">ยอด${step.step_name}</th>`;
+        let html = `<tr>`;
+        
+        tableColumns.forEach((col, index) => {
+            let extraClass = '';
+            let inlineStyle = 'padding: 12px 15px;';
+            
+            if (col.id === 'order_no') inlineStyle += ' padding-left:15px;';
+            if (col.id === 'quantity' || col.type === 'qty') extraClass = 'text-right-col';
+            if (col.type === 'pct') extraClass = 'text-center-col';
+
+            html += `<th class="draggable-col ${extraClass}" draggable="true" data-index="${index}" style="${inlineStyle}" title="ลากสลับคอลัมน์ได้">${col.label}</th>`;
         });
+        
         html += `</tr>`;
         thead.innerHTML = html;
+        
+        // ผูก Event สำหรับลากสลับคอลัมน์ทุกครั้งที่มีการสร้างหัวตารางใหม่
+        setupDragAndDrop();
     }
 
     function renderTable(data) {
@@ -674,7 +774,7 @@
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${tableColumns.length}" class="text-center text-muted py-4">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
             return;
         }
 
@@ -686,32 +786,41 @@
             let endDate = order.end_date ? order.end_date.split('T')[0] : '-';
 
             let rowHtml = `<tr>`;
-            rowHtml += `<td><span class="order-link" onclick="openOrderPreview(${order.id_order})">${safeOrderNo}</span></td>`;
-            rowHtml += `<td>${workCode}</td>`;
-            rowHtml += `<td>${poNo}</td>`;
-            rowHtml += `<td class="text-right-col fw-bold">${orderQty.toLocaleString()}</td>`;
-            rowHtml += `<td>${endDate}</td>`;
+            
+            tableColumns.forEach(col => {
+                if (col.id === 'order_no') {
+                    rowHtml += `<td><span class="order-link" onclick="openOrderPreview(${order.id_order})">${safeOrderNo}</span></td>`;
+                } else if (col.id === 'work_code') {
+                    rowHtml += `<td>${workCode}</td>`;
+                } else if (col.id === 'po_no') {
+                    rowHtml += `<td>${poNo}</td>`;
+                } else if (col.id === 'quantity') {
+                    rowHtml += `<td class="text-right-col fw-bold">${orderQty.toLocaleString()}</td>`;
+                } else if (col.id === 'end_date') {
+                    rowHtml += `<td>${endDate}</td>`;
+                } else if (col.type === 'pct' || col.type === 'qty') {
+                    let stepProduced = 0;
+                    col.stepData.ids.forEach(stepId => {
+                        if (aggregatedProduction[order.id_order] && aggregatedProduction[order.id_order][stepId]) {
+                            stepProduced += aggregatedProduction[order.id_order][stepId];
+                        }
+                    });
 
-            allProductionSteps.forEach(step => {
-                let stepProduced = 0;
-                step.ids.forEach(stepId => {
-                    if (aggregatedProduction[order.id_order] && aggregatedProduction[order.id_order][stepId]) {
-                        stepProduced += aggregatedProduction[order.id_order][stepId];
+                    if (col.type === 'pct') {
+                        let pct = (orderQty > 0 && stepProduced > 0) ? ((stepProduced / orderQty) * 100).toFixed(1) : '-';
+                        let pctClass = '';
+                        if (pct !== '-') {
+                            let p = parseFloat(pct);
+                            if (p >= 100) pctClass = 'bg-status-green';
+                            else if (p >= 75) pctClass = 'bg-status-yellow';
+                            else if (p >= 30) pctClass = 'bg-status-orange';
+                            else pctClass = 'bg-status-red';
+                        }
+                        rowHtml += `<td class="text-center-col ${pctClass}">${pct !== '-' ? pct + '%' : '-'}</td>`;
+                    } else if (col.type === 'qty') {
+                        rowHtml += `<td class="text-right-col">${stepProduced > 0 ? stepProduced.toLocaleString() : '-'}</td>`;
                     }
-                });
-
-                let pct = (orderQty > 0 && stepProduced > 0) ? ((stepProduced / orderQty) * 100).toFixed(1) : '-';
-                let pctClass = '';
-                if (pct !== '-') {
-                    let p = parseFloat(pct);
-                    if (p >= 100) pctClass = 'bg-status-green';
-                    else if (p >= 75) pctClass = 'bg-status-yellow';
-                    else if (p >= 30) pctClass = 'bg-status-orange';
-                    else pctClass = 'bg-status-red';
                 }
-
-                rowHtml += `<td class="text-center-col ${pctClass}">${pct !== '-' ? pct + '%' : '-'}</td>`;
-                rowHtml += `<td class="text-right-col">${stepProduced > 0 ? stepProduced.toLocaleString() : '-'}</td>`;
             });
 
             rowHtml += `</tr>`;
