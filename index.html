@@ -418,7 +418,7 @@
     let allOrdersData = [];
     let workItemsMap = {};
     let allProductionSteps = []; 
-    let tableColumns = []; // ตัวแปรจัดเก็บโครงสร้างคอลัมน์สำหรับการลากสลับ
+    let tableColumns = []; 
     let targetToStepMap = {}; 
     let aggregatedProduction = {}; 
     let rawStepsData = [];
@@ -482,12 +482,11 @@
 
             let fetchedOrders = await ordersRes.json();
             
-            // กรองข้อมูลเฉพาะบิลที่ยังไม่ปิด (is_closed เป็น false หรือ null)
+            // กรองเฉพาะบิลที่ยังไม่ปิด (is_closed เป็น false หรือ null)
             allOrdersData = fetchedOrders.filter(order => !order.is_closed || String(order.is_closed).toLowerCase() === 'false');
 
             const workItems = await workItemsRes.json();
             rawStepsData = await stepsRes.json(); 
-            // เรียงลำดับ rawStepsData ตาม id_step (Level ของขั้นตอนการผลิต) จากน้อยไปมาก
             rawStepsData.sort((a, b) => a.id_step - b.id_step);
 
             allTargetsData = await targetsRes.json();
@@ -539,9 +538,9 @@
         }
     }
 
-    // ฟังก์ชันสร้างโครงสร้างคอลัมน์ครั้งแรกสุด (เพื่อใช้สำหรับการลากสลับตำแหน่ง)
+    // ฟังก์ชันสร้างคอลัมน์พร้อมโหลดค่าที่บันทึกไว้ใน localStorage
     function initTableColumns() {
-        tableColumns = [
+        let defaultColumns = [
             { id: 'order_no', label: 'เลขที่ใบสั่ง', type: 'base' },
             { id: 'work_code', label: 'รหัสสินค้า', type: 'base' },
             { id: 'po_no', label: 'PO_NO', type: 'base' },
@@ -550,12 +549,35 @@
         ];
 
         allProductionSteps.forEach(step => {
-            tableColumns.push({ id: `pct_${step.step_name}`, label: `%${step.step_name}`, type: 'pct', stepData: step });
-            tableColumns.push({ id: `qty_${step.step_name}`, label: `ยอด${step.step_name}`, type: 'qty', stepData: step });
+            defaultColumns.push({ id: `pct_${step.step_name}`, label: `%${step.step_name}`, type: 'pct', stepData: step });
+            defaultColumns.push({ id: `qty_${step.step_name}`, label: `ยอด${step.step_name}`, type: 'qty', stepData: step });
         });
+
+        // ดึงลำดับคอลัมน์ที่ผู้ใช้เคยลากสลับไว้จาก localStorage
+        const savedOrder = localStorage.getItem('jaguar_table_columns_order');
+        if (savedOrder) {
+            try {
+                let savedIds = JSON.parse(savedOrder);
+                let reordered = [];
+                savedIds.forEach(id => {
+                    let found = defaultColumns.find(col => col.id === id);
+                    if (found) reordered.push(found);
+                });
+                // เพิ่มคอลัมน์ใหม่ๆ ที่อาจจะเพิ่งสร้างเพิ่ม (ถ้ามี)
+                defaultColumns.forEach(col => {
+                    if (!reordered.some(r => r.id === col.id)) {
+                        reordered.push(col);
+                    }
+                });
+                tableColumns = reordered;
+                return;
+            } catch (e) {
+                console.error("Load saved columns error:", e);
+            }
+        }
+        tableColumns = defaultColumns;
     }
 
-    // ฟังก์ชันติดตั้งระบบ Drag & Drop สลับคอลัมน์
     function setupDragAndDrop() {
         const headers = document.querySelectorAll('.draggable-col');
         let dragSrcIndex = -1;
@@ -590,11 +612,13 @@
                 let targetIndex = parseInt(this.getAttribute('data-index'));
                 
                 if (dragSrcIndex !== targetIndex && dragSrcIndex !== -1) {
-                    // สลับตำแหน่งข้อมูลคอลัมน์ใน Array หลัก
                     const movedItem = tableColumns.splice(dragSrcIndex, 1)[0];
                     tableColumns.splice(targetIndex, 0, movedItem);
                     
-                    // สั่ง Render ตารางใหม่ทั้งหมดตามการเรียงคอลัมน์ใหม่
+                    // บันทึกลำดับคอลัมน์ใหม่ลงใน localStorage ทันที
+                    const colIds = tableColumns.map(col => col.id);
+                    localStorage.setItem('jaguar_table_columns_order', JSON.stringify(colIds));
+                    
                     renderTableHeader();
                     applyFilters();
                     updateStickyColumns();
@@ -764,8 +788,6 @@
         
         html += `</tr>`;
         thead.innerHTML = html;
-        
-        // ผูก Event สำหรับลากสลับคอลัมน์ทุกครั้งที่มีการสร้างหัวตารางใหม่
         setupDragAndDrop();
     }
 
